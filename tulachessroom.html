@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Шахмат Фишера</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Fixed Light Theme Variables (Classic) */
+        :root {
+            --bg-gradient-start: #e0eafc;
+            --bg-gradient-end: #cfdef3;
+            --container-bg: #ffffff;
+            --container-shadow-color: rgba(0, 0, 0, 0.25);
+            --board-border-color: #333;
+            --board-shadow-color: rgba(0, 0, 0, 0.5);
+            --button-primary-start: #1a73e8;
+            --button-primary-end: #0056b3;
+            --button-hover-start: #0056b3;
+            --button-hover-end: #003d80;
+            --text-tulskaya-color: #1a73e8; /* Синий */
+            --text-shahmatnaya-color: #ea4335; /* Красный */
+            --text-gostinaya-color: #1a73e8; /* Синий */
+            --text-main-color: #333;
+            --modal-bg: #ffffff;
+            --modal-shadow-color: rgba(0, 0, 0, 0.4);
+            --history-item-bg: #f0f4f8;
+            --history-item-shadow: rgba(0, 0, 0, 0.1);
+            --history-btn-bg: #e2e8f0;
+            --history-btn-color: #444;
+            --history-btn-hover-bg: #cbd5e1;
+            --history-pin-bg: #28a745;
+            --history-pin-hover-bg: #218838;
+            --history-delete-bg: #dc3545;
+            --history-delete-hover-bg: #c82333;
+            --history-clear-all-bg: #f44336;
+            --history-clear-all-hover-bg: #d32f2f;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background 0.5s ease;
+            overflow-x: hidden;
+            color: var(--text-main-color);
+        }
+        .container {
+            background-color: var(--container-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px var(--container-shadow-color), 0 0 0 8px rgba(255, 255, 255, 0.5); /* Усиленная тень */
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: containerFadeIn 1s forwards ease-out;
+            max-width: 95%;
+            width: 100%;
+            perspective: 1000px;
+            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+        }
+        @keyframes containerFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .container:hover {
+            transform: translateY(0) rotateY(2deg);
+            box-shadow: 0 25px 60px var(--container-shadow-color), 0 0 0 8px rgba(255, 255, 255, 0.6); /* Усиленная тень при наведении */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .chess-board-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 550px;
+            aspect-ratio: 1 / 1;
+            margin: 20px 0;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+        }
+        .chess-board-wrapper:hover {
+            transform: rotateX(2deg) rotateY(-2deg);
+        }
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: 100%;
+            height: 100%;
+            border: 8px solid var(--board-border-color);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4), 0 15px 40px var(--board-shadow-color);
+            border-radius: 15px;
+            overflow: hidden;
+            background-color: #fff;
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+        .chess-board.animated-appear {
+            opacity: 0;
+            transform: rotateX(5deg) scale(0.9);
+            animation: boardAppear 1s 0.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes boardAppear {
+            to {
+                opacity: 1;
+                transform: rotateX(0deg) scale(1);
+            }
+        }
+
+        .square {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2rem, 8vw, 3.8rem);
+            font-weight: bold;
+            user-select: none;
+            transition: background-color 0.3s ease;
+            position: relative;
+        }
+        .light {
+            background-color: var(--light-square-color);
+        }
+        .dark {
+            background-color: var(--dark-square-color);
+        }
+        .piece {
+            line-height: 1;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            position: absolute;
+            opacity: 1; /* Default to visible */
+            transform: translateY(0) scale(1) rotateY(0deg); /* Default to normal */
+        }
+        .chess-board.animated-appear .piece {
+            opacity: 0;
+            transform: translateY(-40px) scale(0.7) rotateY(30deg);
+            animation: piecePopIn 0.7s forwards cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .black-piece {
+            color: #333;
+        }
+        .white-piece {
+            color: #eee;
+        }
+
+        @keyframes piecePopIn {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateY(0deg);
+            }
+        }
+        @keyframes piecePopOut {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateY(0deg);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(40px) scale(0.7) rotateY(-30deg);
+            }
+        }
+
+        .button-generate {
+            background: linear-gradient(145deg, var(--button-primary-start), var(--button-primary-end));
+            color: white;
+            padding: 18px 36px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: clamp(1.1rem, 4.5vw, 1.4rem);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            margin-top: 40px;
+            border: none;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            transform: scale(1);
+        }
+        .button-generate:hover {
+            background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+        .button-generate:active {
+            transform: translateY(-3px) scale(0.98);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+        .button-generate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.35);
+            transform: skewX(-30deg);
+            transition: all 0.6s ease;
+        }
+        .button-generate:hover::before {
+            left: 100%;
+        }
+
+        /* button-action is now only for the "Load" and "Pin/Unpin/Delete" buttons in history modal */
+        .button-action {
+            background: linear-gradient(145deg, var(--button-primary-start), var(--button-primary-end));
+            color: white;
+            padding: 8px 12px; /* Smaller padding for these specific actions */
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            transform: scale(1);
+        }
+        .button-action:hover {
+            background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .button-action:active {
+            transform: translateY(-1px) scale(0.98);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+        .button-action::before { /* Still keep the shine effect for these smaller action buttons */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: skewX(-30deg);
+            transition: all 0.5s ease;
+        }
+        .button-action:hover::before {
+            left: 100%;
+        }
+
+        .button-icon {
+            padding: 12px;
+            font-size: 1.5rem;
+            margin-top: 0;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(145deg, var(--button-primary-start), var(--button-primary-end));
+            color: white;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .button-icon:hover {
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
+        }
+        .button-icon:active {
+            transform: translateY(-1px) scale(0.95);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .main-button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .primary-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .secondary-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+        }
+
+
+        .text-tshg-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            width: 100%;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .text-tshg-link:hover {
+            transform: scale(1.02);
+        }
+
+        .text-tshg {
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.2;
+            text-shadow: 3px 3px 7px rgba(0,0,0,0.4);
+            transform: translateY(-20px);
+            opacity: 0;
+            animation: titleSlideIn 0.8s 0.2s forwards ease-out;
+        }
+        @keyframes titleSlideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .text-tulskaya { color: var(--text-tulskaya-color); }
+        .text-shahmatnaya { color: var(--text-shahmatnaya-color); }
+        .text-gostinaya { color: var(--text-gostinaya-color); }
+
+        .contact-info {
+            margin-top: 40px;
+            font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+            color: #777;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: contactFadeIn 1s 1.2s forwards ease-out;
+        }
+        @keyframes contactFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .contact-info a {
+            color: var(--text-shahmatnaya-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+        .contact-info a:hover {
+            color: var(--button-hover-start);
+            text-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+        }
+
+        /* Board Coordinates */
+        .file-labels, .rank-labels {
+            position: absolute;
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            font-size: clamp(0.7rem, 2.5vw, 1rem);
+            font-weight: 600;
+            color: #555;
+            text-shadow: 0 0 2px rgba(255,255,255,0.7);
+            z-index: 10;
+        }
+        .file-labels {
+            bottom: -35px;
+            left: 0;
+            height: auto;
+            align-items: flex-start;
+        }
+        .rank-labels {
+            right: -35px;
+            top: 0;
+            width: auto;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: flex-start;
+        }
+        .file-label-item, .rank-label-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 0 2px;
+        }
+        .rank-label-item {
+            flex-direction: column;
+        }
+
+        /* More Info Section */
+        .info-section {
+            background-color: var(--container-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.7s ease-in-out, padding 0.7s ease-in-out, opacity 0.7s ease-in-out, background-color 0.5s ease;
+            opacity: 0;
+            width: 100%;
+            box-sizing: border-box;
+            color: var(--text-main-color);
+            display: flex; /* Use flexbox for internal layout */
+            flex-direction: column;
+        }
+        .info-section.active {
+            max-height: 80vh;
+            padding: 25px;
+            opacity: 1;
+            overflow-y: auto;
+        }
+        .info-section h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main-color);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .info-section ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        .info-section ul li {
+            font-size: 1rem;
+            color: var(--text-main-color);
+            line-height: 1.4;
+        }
+        .info-section ul li strong {
+            color: var(--text-shahmatnaya-color);
+        }
+        .info-section p {
+            font-size: 0.95rem;
+            color: var(--text-main-color);
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        .info-section p strong {
+            color: var(--text-gostinaya-color);
+        }
+
+        .info-hide-button {
+            background-color: #f0f0f0; /* Lighter background */
+            color: #555;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-top: 20px; /* Space from content above */
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, color 0.2s ease;
+            border: 1px solid #ddd;
+            display: block;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .info-hide-button:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-1px);
+        }
+        .info-hide-button:active {
+            transform: translateY(0);
+        }
+
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: var(--modal-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px var(--modal-shadow-color);
+            max-width: 500px;
+            width: 90%;
+            transform: translateY(-50px) scale(0.8);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease, background-color 0.5s ease;
+            position: relative;
+            color: var(--text-main-color);
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .modal-close:hover {
+            color: #333;
+            transform: rotate(90deg);
+        }
+        .modal-content h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main-color);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* Settings specific styles */
+        .settings-option {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            background-color: #fcfcfc;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .settings-option:last-child {
+            margin-bottom: 0;
+        }
+        .settings-option label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-main-color);
+            font-size: 1.1rem;
+            display: block;
+        }
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .color-swatch.selected {
+            border-color: var(--text-shahmatnaya-color); /* Highlight with red from title */
+            transform: scale(1.15);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3), 0 0 15px var(--text-shahmatnaya-color); /* Added glow */
+        }
+        .color-swatch:hover {
+            transform: scale(1.08);
+        }
+        .settings-option input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            background-color: var(--container-bg);
+            color: var(--text-main-color);
+            margin-top: 5px; /* Added margin for input */
+        }
+
+        /* Toggle Switch */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 0;
+            padding-top: 5px;
+        }
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 60px;
+          height: 34px;
+          flex-shrink: 0;
+        }
+
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          -webkit-transition: .4s;
+          transition: .4s;
+          border-radius: 34px;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          -webkit-transition: .4s;
+          transition: .4s;
+          border-radius: 50%;
+        }
+
+        input:checked + .slider {
+          background-color: #2196F3;
+        }
+
+        input:focus + .slider {
+          box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before {
+          -webkit-transform: translateX(26px);
+          -ms-transform: translateX(26px);
+          transform: translateX(26px);
+        }
+
+        /* History specific styles */
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .history-item {
+            background-color: var(--history-item-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px var(--history-item-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.5s ease;
+        }
+        .history-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px var(--history-item-shadow);
+        }
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-main-color);
+            font-size: 1.1rem;
+        }
+        .history-item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+        .history-item-actions button {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, color 0.2s ease;
+            border: none;
+            background-color: var(--history-btn-bg);
+            color: var(--history-btn-color);
+        }
+        .history-item-actions button:hover {
+            background-color: var(--history-btn-hover-bg);
+            transform: translateY(-1px);
+        }
+        .history-item-actions button:active {
+            transform: translateY(0);
+        }
+        .history-item-actions .pin-button.pinned {
+            background-color: var(--history-pin-bg);
+            color: white;
+        }
+        .history-item-actions .pin-button.pinned:hover {
+            background-color: var(--history-pin-hover-bg);
+        }
+        .history-item-actions .delete-button {
+            background-color: var(--history-delete-bg);
+            color: white;
+        }
+        .history-item-actions .delete-button:hover {
+            background-color: var(--history-delete-hover-bg);
+        }
+        .history-clear-all {
+            background-color: var(--history-clear-all-bg);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border: none;
+            display: block;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .history-clear-all:hover {
+            background-color: var(--history-clear-all-hover-bg);
+        }
+
+        /* Footer styles */
+        .app-footer {
+            background-color: #222; /* Dark background */
+            color: #f0f0f0; /* Light text */
+            padding: 30px 20px;
+            margin-top: 40px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4); /* Shadow for separation */
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+        .app-footer p {
+            margin-bottom: 8px;
+        }
+        .app-footer a {
+            color: #66b3ff; /* Lighter blue for links */
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .app-footer a:hover {
+            color: #aaddff;
+            text-decoration: underline;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px;
+            }
+            .text-tshg {
+                font-size: clamp(1.5rem, 7vw, 2.5rem);
+            }
+            .button-generate {
+                padding: 15px 25px;
+                font-size: clamp(1rem, 4vw, 1.2rem);
+            }
+            .button-action, .button-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+                border-radius: 12px;
+            }
+            .info-section h3 {
+                font-size: 1.3rem;
+            }
+            .info-section ul li {
+                font-size: 0.9rem;
+            }
+            .info-section p {
+                font-size: 0.85rem;
+            }
+            .modal-content {
+                padding: 20px;
+            }
+            .modal-content h2 {
+                font-size: 1.5rem;
+            }
+            .main-button-group {
+                gap: 15px;
+            }
+            .primary-actions, .secondary-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            .button-generate, .button-action, .button-icon {
+                width: 100%;
+                max-width: 300px;
+            }
+            .switch-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="https://chess71.ru/" target="_blank" rel="noopener noreferrer" class="text-tshg-link">
+            <div class="text-tshg">
+                <span class="text-tulskaya">Тульская</span>
+                <span class="text-shahmatnaya">Шахматная</span>
+                <span class="text-gostinaya">Гостиная</span>
+            </div>
+        </a>
+
+        <div class="chess-board-wrapper">
+            <div id="chessBoard" class="chess-board"></div>
+            <div class="file-labels"></div>
+            <div class="rank-labels"></div>
+        </div>
+
+        <div class="main-button-group">
+            <div class="primary-actions">
+                <button id="generateButton" class="button-generate">Сгенерировать позицию</button>
+            </div>
+            <div class="secondary-actions">
+                <button id="moreInfoButton" class="button-icon"> &#x2753; </button> <!-- Question mark icon -->
+                <button id="historyButton" class="button-icon"> &#128466; </button> <!-- History icon -->
+                <button id="settingsButton" class="button-icon"> &#9881; </button> <!-- Gear icon -->
+            </div>
+        </div>
+
+        <div id="infoSection" class="info-section">
+            <h3>Информация о текущей позиции</h3>
+            <ul id="piecePositionsList">
+                <!-- Piece positions will be inserted here by JS -->
+            </ul>
+            <h3>Правила расстановки Шахмат Фишера (Chess960)</h3>
+            <ul>
+                <li>Пешки располагаются на своих обычных начальных полях (вторая горизонталь для белых, седьмая для черных).</li>
+                <li>Остальные фигуры (ладьи, кони, слоны, ферзь, король) располагаются на первой горизонтали для белых и восьмой для черных.</li>
+                <li>Слоны должны стоять на полях разного цвета (один на белом, другой на черном).</li>
+                <li>Король должен располагаться между двумя ладьями.</li>
+            </ul>
+            <button id="hideInfoButton" class="info-hide-button">Скрыть информацию</button>
+        </div>
+
+        <div class="contact-info">
+            <p>Связь: <a href="https://chess71.ru/" target="_blank" rel="noopener noreferrer">Наш основной сайт</a></p>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h2>Настройки</h2>
+            <div class="modal-body">
+                <div class="settings-option">
+                    <label>Выберите дизайн доски:</label>
+                    <div class="color-palette" id="boardThemes">
+                        <div class="color-swatch" data-light-color="#f0d9b5" data-dark-color="#b58863" style="background-color: #f0d9b5; border: 1px solid #b58863;"></div>
+                        <div class="color-swatch" data-light-color="#ffffff" data-dark-color="#888888" style="background-color: #ffffff; border: 1px solid #888888;"></div>
+                        <div class="color-swatch" data-light-color="#e0e0e0" data-dark-color="#404040" style="background-color: #e0e0e0; border: 1px solid #404040;"></div>
+                        <div class="color-swatch selected" data-light-color="#add8e6" data-dark-color="#4682b4" style="background-color: #add8e6; border: 1px solid #4682b4;"></div>
+                        <div class="color-swatch" data-light-color="#c0c0c0" data-dark-color="#404040" style="background-color: #c0c0c0; border: 1px solid #404040;"></div>
+                        <div class="color-swatch" data-light-color="#ffe4b5" data-dark-color="#8b4513" style="background-color: #ffe4b5; border: 1px solid #8b4513;"></div>
+                        <div class="color-swatch" data-light-color="#769656" data-dark-color="#eeeed2" style="background-color: #769656; border: 1px solid #eeeed2;"></div> <!-- Green/Cream -->
+                        <div class="color-swatch" data-light-color="#b8c2d9" data-dark-color="#6a7b9c" style="background-color: #b8c2d9; border: 1px solid #6a7b9c;"></div> <!-- Blue-Grey -->
+                    </div>
+                </div>
+                <div class="settings-option">
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" id="enableHistoryToggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <label for="enableHistoryToggle" style="margin-bottom: 0;">Сохранять историю позиций</label>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                        Включение этой опции позволяет сохранять сгенерированные позиции в истории для последующего просмотра.
+                    </p>
+                    <div id="historyLimitOption" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd;">
+                        <label for="historyLimit">Максимальное количество позиций в истории (0 = без лимита):</label>
+                        <input type="number" id="historyLimit" min="0" value="30">
+                        <p style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                            Установите, сколько последних позиций будет храниться. Старые позиции будут удаляться автоматически.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h2>История позиций</h2>
+            <div class="modal-body">
+                <ul id="historyList" class="history-list">
+                    <!-- History items will be loaded here -->
+                </ul>
+                <button id="clearAllHistoryButton" class="history-clear-all">Удалить всю историю</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        <p>Copyright © 2019 - 2025</p>
+        <p>АНО "Тульская шахматная гостиная"</p>
+        <p><a href="https://chess71.ru/politika-konfidencialnosti" target="_blank" rel="noopener noreferrer">Политика конфиденциальности</a></p>
+        <!-- Removed "Продвижение сайтов" as per request -->
+        <p>Адрес: г. Тула, Проспект Ленина, д. 16, 2 этаж</p>
+        <p>Email: chessintula@mail.ru</p>
+        <p>Телефон: +7 (915) 789-789-6</p>
+    </footer>
+
+    <script>
+        const WHITE_PIECES = {
+            'R': '&#9814;', 'N': '&#9816;', 'B': '&#9815;',
+            'Q': '&#9813;', 'K': '&#9812;', 'P': '&#9817;'
+        };
+
+        const BLACK_PIECES = {
+            'R': '&#9820;', 'N': '&#9822;', 'B': '&#9821;',
+            'Q': '&#9819;', 'K': '&#9818;', 'P': '&#9823;'
+        };
+
+        const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        const RANKS = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
+        const boardElement = document.getElementById('chessBoard');
+        const generateButton = document.getElementById('generateButton');
+        const moreInfoButton = document.getElementById('moreInfoButton');
+        const infoSection = document.getElementById('infoSection');
+        const piecePositionsList = document.getElementById('piecePositionsList');
+        const hideInfoButton = document.getElementById('hideInfoButton'); // New hide button
+        const historyButton = document.getElementById('historyButton');
+        const settingsButton = document.getElementById('settingsButton');
+
+        const settingsModal = document.getElementById('settingsModal');
+        const historyModal = document.getElementById('historyModal');
+        const modalCloseButtons = document.querySelectorAll('.modal-close');
+
+        const boardThemesContainer = document.getElementById('boardThemes');
+        const historyLimitInput = document.getElementById('historyLimit');
+        const historyList = document.getElementById('historyList');
+        const clearAllHistoryButton = document.getElementById('clearAllHistoryButton');
+        const enableHistoryToggle = document.getElementById('enableHistoryToggle');
+        const historyLimitOption = document.getElementById('historyLimitOption');
+
+        let currentBackRank = [];
+        let history = [];
+        const MAX_HISTORY_DEFAULT = 30;
+
+        // --- Utility Functions ---
+
+        function getFileChar(index) {
+            return FILES[index];
+        }
+
+        function getRankNumber(index) {
+            return RANKS[7 - index];
+        }
+
+        function getPieceName(symbol) {
+            switch (symbol) {
+                case 'K': return 'Король';
+                case 'Q': return 'Ферзь';
+                case 'R': return 'Ладья';
+                case 'B': return 'Слон';
+                case 'N': return 'Конь';
+                case 'P': return 'Пешка';
+                default: return '';
+            }
+        }
+
+        // --- Board Initialization and Rendering ---
+
+        function createEmptyBoard() {
+            boardElement.innerHTML = '';
+            const fileLabelsContainer = document.querySelector('.file-labels');
+            const rankLabelsContainer = document.querySelector('.rank-labels');
+            fileLabelsContainer.innerHTML = '';
+            rankLabelsContainer.innerHTML = '';
+
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    if ((i + j) % 2 === 0) {
+                        square.classList.add('light');
+                    } else {
+                        square.classList.add('dark');
+                    }
+                    square.id = `s${i}${j}`;
+                    boardElement.appendChild(square);
+                }
+            }
+
+            for (let j = 0; j < 8; j++) {
+                const label = document.createElement('div');
+                label.classList.add('file-label-item');
+                label.textContent = FILES[j];
+                fileLabelsContainer.appendChild(label);
+            }
+
+            for (let i = 0; i < 8; i++) {
+                const label = document.createElement('div');
+                label.classList.add('rank-label-item');
+                label.textContent = RANKS[7 - i];
+                rankLabelsContainer.appendChild(label);
+            }
+        }
+
+        function getChess960BackRank(positionNumber) {
+            const backRank = Array(8).fill(null);
+            let tempIndex = positionNumber;
+
+            const b1_idx = tempIndex % 4;
+            tempIndex = Math.floor(tempIndex / 4);
+            const b2_idx = tempIndex % 4;
+            tempIndex = Math.floor(tempIndex / 4);
+
+            backRank[2 * b1_idx] = 'B';
+            backRank[2 * b2_idx + 1] = 'B';
+
+            const currentAvailableBoardSlots = [];
+            for (let i = 0; i < 8; i++) {
+                if (backRank[i] === null) {
+                    currentAvailableBoardSlots.push(i);
+                }
+            }
+
+            const remainingPermutationIndex = tempIndex;
+
+            const rkr_slot_combinations = [
+                [0, 1, 2], [0, 1, 3], [0, 1, 4], [0, 1, 5],
+                [0, 2, 3], [0, 2, 4], [0, 2, 5], [0, 3, 4],
+                [0, 3, 5], [0, 4, 5],
+                [1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4],
+                [1, 3, 5], [1, 4, 5],
+                [2, 3, 4], [2, 3, 5], [2, 4, 5],
+                [3, 4, 5]
+            ];
+
+            const nn_slot_combinations = [
+                [0, 1], [0, 2], [1, 2]
+            ];
+
+            let currentRemainingIndex = remainingPermutationIndex;
+
+            const rkr_combo_index = currentRemainingIndex % 20;
+            currentRemainingIndex = Math.floor(currentRemainingIndex / 20);
+
+            const selectedRKRIndicesInAvailable = rkr_slot_combinations[rkr_combo_index];
+
+            backRank[currentAvailableBoardSlots[selectedRKRIndicesInAvailable[0]]] = 'R';
+            backRank[currentAvailableBoardSlots[selectedRKRIndicesInAvailable[1]]] = 'K';
+            backRank[currentAvailableBoardSlots[selectedRKRIndicesInAvailable[2]]] = 'R';
+
+            const remainingSlotsAfterRKR = [];
+            for (let i = 0; i < 6; i++) {
+                if (!selectedRKRIndicesInAvailable.includes(i)) {
+                    remainingSlotsAfterRKR.push(currentAvailableBoardSlots[i]);
+                }
+            }
+
+            const nn_combo_index = currentRemainingIndex % 3;
+            currentRemainingIndex = Math.floor(currentRemainingIndex / 3);
+
+            const selectedNNIndicesInRemaining = nn_slot_combinations[nn_combo_index];
+
+            backRank[remainingSlotsAfterRKR[selectedNNIndicesInRemaining[0]]] = 'N';
+            backRank[remainingSlotsAfterRKR[selectedNNIndicesInRemaining[1]]] = 'N';
+
+            const finalQSlot = remainingSlotsAfterRKR.find(
+                slot => !selectedNNIndicesInRemaining.map(idx => remainingSlotsAfterRKR[idx]).includes(slot)
+            );
+            backRank[finalQSlot] = 'Q';
+
+            return backRank;
+        }
+
+        function renderFullBoard(whiteBackRank, isInitialLoad = false) {
+            const oldPieces = document.querySelectorAll('.piece');
+
+            const renderNewPieces = () => {
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const squareElement = document.getElementById(`s${i}${j}`);
+                        squareElement.innerHTML = '';
+                    }
+                }
+
+                const pieceData = [];
+
+                whiteBackRank.forEach((piece, index) => {
+                    if (piece) {
+                        const squareElement = document.getElementById(`s7${index}`);
+                        const pieceElement = document.createElement('div');
+                        pieceElement.classList.add('piece', 'white-piece');
+                        pieceElement.innerHTML = WHITE_PIECES[piece];
+                        if (!isInitialLoad) {
+                            pieceElement.style.animationDelay = `${index * 0.04}s`;
+                            pieceElement.style.opacity = 0;
+                            pieceElement.style.transform = 'translateY(-40px) scale(0.7) rotateY(30deg)';
+                        } else {
+                            pieceElement.style.opacity = 1;
+                            pieceElement.style.transform = 'translateY(0) scale(1) rotateY(0deg)';
+                        }
+                        squareElement.appendChild(pieceElement);
+                        pieceData.push({ color: 'white', type: piece, square: `${getFileChar(index)}${getRankNumber(7)}` });
+                    }
+                });
+
+                for (let j = 0; j < 8; j++) {
+                    const squareElement = document.getElementById(`s6${j}`);
+                    const pieceElement = document.createElement('div');
+                    pieceElement.classList.add('piece', 'white-piece');
+                    pieceElement.innerHTML = WHITE_PIECES['P'];
+                    if (!isInitialLoad) {
+                        pieceElement.style.animationDelay = `${(j + 8) * 0.04}s`;
+                        pieceElement.style.opacity = 0;
+                        pieceElement.style.transform = 'translateY(-40px) scale(0.7) rotateY(30deg)';
+                    } else {
+                        pieceElement.style.opacity = 1;
+                        pieceElement.style.transform = 'translateY(0) scale(1) rotateY(0deg)';
+                    }
+                    squareElement.appendChild(pieceElement);
+                    pieceData.push({ color: 'white', type: 'P', square: `${getFileChar(j)}${getRankNumber(6)}` });
+                }
+
+                whiteBackRank.forEach((piece, index) => {
+                    if (piece) {
+                        const squareElement = document.getElementById(`s0${index}`);
+                        const pieceElement = document.createElement('div');
+                        pieceElement.classList.add('piece', 'black-piece');
+                        pieceElement.innerHTML = BLACK_PIECES[piece];
+                        if (!isInitialLoad) {
+                            pieceElement.style.animationDelay = `${(index + 16) * 0.04}s`;
+                            pieceElement.style.opacity = 0;
+                            pieceElement.style.transform = 'translateY(-40px) scale(0.7) rotateY(30deg)';
+                        } else {
+                            pieceElement.style.opacity = 1;
+                            pieceElement.style.transform = 'translateY(0) scale(1) rotateY(0deg)';
+                        }
+                        squareElement.appendChild(pieceElement);
+                        pieceData.push({ color: 'black', type: piece, square: `${getFileChar(index)}${getRankNumber(0)}` });
+                    }
+                });
+
+                for (let j = 0; j < 8; j++) {
+                    const squareElement = document.getElementById(`s1${j}`);
+                    const pieceElement = document.createElement('div');
+                    pieceElement.classList.add('piece', 'black-piece');
+                    pieceElement.innerHTML = BLACK_PIECES['P'];
+                    if (!isInitialLoad) {
+                        pieceElement.style.animationDelay = `${(j + 24) * 0.04}s`;
+                        pieceElement.style.opacity = 0;
+                        pieceElement.style.transform = 'translateY(-40px) scale(0.7) rotateY(30deg)';
+                    } else {
+                        pieceElement.style.opacity = 1;
+                        pieceElement.style.transform = 'translateY(0) scale(1) rotateY(0deg)';
+                    }
+                    squareElement.appendChild(pieceElement);
+                    pieceData.push({ color: 'black', type: 'P', square: `${getFileChar(j)}${getRankNumber(1)}` });
+                }
+
+                currentBackRank = whiteBackRank;
+                updatePiecePositionsInfo(pieceData);
+
+                if (isInitialLoad) {
+                    boardElement.style.opacity = 1;
+                    boardElement.style.transform = 'rotateX(0deg) scale(1)';
+                    boardElement.classList.remove('animated-appear');
+                } else {
+                    boardElement.classList.add('animated-appear');
+                }
+            };
+
+            if (oldPieces.length > 0 && !isInitialLoad) {
+                oldPieces.forEach(piece => {
+                    piece.style.animation = 'piecePopOut 0.3s forwards ease-in';
+                });
+                setTimeout(renderNewPieces, 300);
+            } else {
+                renderNewPieces();
+            }
+        }
+
+        function generateAndDisplayPosition(posNum = null) {
+            let whiteBackRank;
+            let actualPositionNumber = posNum;
+            const isFirstLaunch = localStorage.getItem('chess960_first_launch') === null;
+
+            if (posNum === null && isFirstLaunch) {
+                whiteBackRank = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'];
+                actualPositionNumber = 'standard';
+                localStorage.setItem('chess960_first_launch', 'false');
+            } else if (posNum === null) {
+                actualPositionNumber = Math.floor(Math.random() * 960);
+                whiteBackRank = getChess960BackRank(actualPositionNumber);
+            } else {
+                if (posNum === 'standard') {
+                    whiteBackRank = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'];
+                } else {
+                    whiteBackRank = getChess960BackRank(posNum);
+                }
+            }
+
+            renderFullBoard(whiteBackRank, isFirstLaunch);
+            if (posNum === null && isHistoryEnabled()) {
+                addPositionToHistory(actualPositionNumber, whiteBackRank);
+            }
+        }
+
+        // --- Info Section Logic ---
+
+        function updatePiecePositionsInfo(pieceData) {
+            piecePositionsList.innerHTML = '';
+
+            const whitePieces = pieceData.filter(p => p.color === 'white');
+            const blackPieces = pieceData.filter(p => p.color === 'black');
+
+            const renderPieceList = (pieces, colorText) => {
+                const king = pieces.find(p => p.type === 'K');
+                const queen = pieces.find(p => p.type === 'Q');
+                const rooks = pieces.filter(p => p.type === 'R').map(p => p.square).join(', ');
+                const bishops = pieces.filter(p => p.type === 'B').map(p => p.square).join(', ');
+                const knights = pieces.filter(p => p.type === 'N').map(p => p.square).join(', ');
+                const pawns = pieces.filter(p => p.type === 'P').map(p => p.square).join(', ');
+
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${colorText}</strong>:<br>` +
+                               `Король: ${king ? king.square : 'N/A'}<br>` +
+                               `Ферзь: ${queen ? queen.square : 'N/A'}<br>` +
+                               `Ладьи: ${rooks}<br>` +
+                               `Слоны: ${bishops}<br>` +
+                               `Кони: ${knights}<br>` +
+                               `Пешки: ${pawns}`;
+                piecePositionsList.appendChild(li);
+            };
+
+            renderPieceList(whitePieces, 'Белые фигуры');
+            renderPieceList(blackPieces, 'Черные фигуры');
+        }
+
+        function toggleInfoSection() {
+            infoSection.classList.toggle('active');
+            // The button icon remains the same, no text change needed.
+            // The hide button's visibility is controlled by CSS based on .info-section.active
+        }
+
+        moreInfoButton.addEventListener('click', toggleInfoSection);
+        hideInfoButton.addEventListener('click', toggleInfoSection); // New listener for hide button
+
+        // --- Modal Logic (Settings & History) ---
+
+        function openModal(modalElement) {
+            modalElement.classList.add('active');
+        }
+
+        function closeModal(modalElement) {
+            modalElement.classList.remove('active');
+        }
+
+        modalCloseButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                closeModal(event.target.closest('.modal-overlay'));
+            });
+        });
+
+        settingsModal.addEventListener('click', (event) => {
+            if (event.target === settingsModal) {
+                closeModal(settingsModal);
+            }
+        });
+        historyModal.addEventListener('click', (event) => {
+            if (event.target === historyModal) {
+                closeModal(historyModal);
+            }
+        });
+
+        // --- Settings Logic ---
+
+        settingsButton.addEventListener('click', () => {
+            openModal(settingsModal);
+            const rootStyles = getComputedStyle(document.documentElement);
+
+            boardThemesContainer.querySelectorAll('.color-swatch').forEach(swatch => {
+                const isSelected = swatch.dataset.lightColor === rootStyles.getPropertyValue('--light-square-color').trim() &&
+                                   swatch.dataset.darkColor === rootStyles.getPropertyValue('--dark-square-color').trim();
+                if (isSelected) {
+                    swatch.classList.add('selected');
+                } else {
+                    swatch.classList.remove('selected');
+                }
+            });
+
+            const historyEnabled = isHistoryEnabled();
+            enableHistoryToggle.checked = historyEnabled;
+            // Now historyLimitOption is a child of the same settings-option, so its display needs to be handled directly.
+            historyLimitOption.style.display = historyEnabled ? 'block' : 'none';
+            historyLimitInput.value = localStorage.getItem('chess960_history_limit') || MAX_HISTORY_DEFAULT;
+        });
+
+        function applyBoardTheme(swatch) {
+            document.documentElement.style.setProperty('--light-square-color', swatch.dataset.lightColor);
+            document.documentElement.style.setProperty('--dark-square-color', swatch.dataset.darkColor);
+            boardThemesContainer.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+            swatch.classList.add('selected');
+            localStorage.setItem('chess960_board_theme_light', swatch.dataset.lightColor);
+            localStorage.setItem('chess960_board_theme_dark', swatch.dataset.darkColor);
+        }
+
+        boardThemesContainer.addEventListener('click', (event) => {
+            const swatch = event.target.closest('.color-swatch');
+            if (swatch && swatch.dataset.lightColor && swatch.dataset.darkColor) {
+                applyBoardTheme(swatch);
+            }
+        });
+
+        enableHistoryToggle.addEventListener('change', () => {
+            const enabled = enableHistoryToggle.checked;
+            localStorage.setItem('chess960_enable_history', enabled);
+            historyLimitOption.style.display = enabled ? 'block' : 'none'; // Control visibility of the limit part
+            updateHistoryButtonVisibility();
+            if (!enabled) {
+                history = [];
+                saveHistory();
+                renderHistory();
+            }
+        });
+
+        historyLimitInput.addEventListener('change', () => {
+            let limit = parseInt(historyLimitInput.value);
+            if (isNaN(limit) || limit < 0) {
+                limit = MAX_HISTORY_DEFAULT;
+                historyLimitInput.value = MAX_HISTORY_DEFAULT;
+            }
+            localStorage.setItem('chess960_history_limit', limit);
+            trimHistory();
+            saveHistory();
+            renderHistory();
+        });
+
+        function isHistoryEnabled() {
+            const enabled = localStorage.getItem('chess960_enable_history');
+            return enabled === null ? true : JSON.parse(enabled);
+        }
+
+        function updateHistoryButtonVisibility() {
+            historyButton.style.display = isHistoryEnabled() ? 'flex' : 'none';
+        }
+
+        function loadSettings() {
+            const savedBoardThemeLight = localStorage.getItem('chess960_board_theme_light');
+            const savedBoardThemeDark = localStorage.getItem('chess960_board_theme_dark');
+            let boardThemeApplied = false;
+            if (savedBoardThemeLight && savedBoardThemeDark) {
+                const savedSwatch = boardThemesContainer.querySelector(`[data-light-color="${savedBoardThemeLight}"][data-dark-color="${savedBoardThemeDark}"]`);
+                if (savedSwatch) {
+                    applyBoardTheme(savedSwatch);
+                    boardThemeApplied = true;
+                }
+            }
+            if (!boardThemeApplied) {
+                const defaultBoardSwatch = boardThemesContainer.querySelector('[data-light-color="#add8e6"]');
+                if (defaultBoardSwatch) {
+                    applyBoardTheme(defaultBoardSwatch);
+                }
+            }
+
+            enableHistoryToggle.checked = isHistoryEnabled();
+            historyLimitInput.value = localStorage.getItem('chess960_history_limit') || MAX_HISTORY_DEFAULT;
+            historyLimitOption.style.display = isHistoryEnabled() ? 'block' : 'none';
+            updateHistoryButtonVisibility();
+        }
+
+        // --- History Logic ---
+
+        historyButton.addEventListener('click', () => {
+            renderHistory();
+            openModal(historyModal);
+        });
+
+        function loadHistory() {
+            if (!isHistoryEnabled()) {
+                history = [];
+                return;
+            }
+            try {
+                const storedHistory = localStorage.getItem('chess960_history');
+                history = storedHistory ? JSON.parse(storedHistory) : [];
+            } catch (e) {
+                console.error("Error loading history from localStorage:", e);
+                history = [];
+            }
+            trimHistory();
+        }
+
+        function saveHistory() {
+            if (!isHistoryEnabled()) {
+                localStorage.removeItem('chess960_history');
+                return;
+            }
+            localStorage.setItem('chess960_history', JSON.stringify(history));
+        }
+
+        function addPositionToHistory(positionNumber, backRank) {
+            if (!isHistoryEnabled()) return;
+
+            const newEntry = {
+                id: Date.now(),
+                positionNumber: positionNumber,
+                backRank: backRank,
+                timestamp: new Date().toLocaleString(),
+                pinned: false
+            };
+            history.unshift(newEntry);
+            trimHistory();
+            saveHistory();
+        }
+
+        function trimHistory() {
+            if (!isHistoryEnabled()) return;
+
+            const limit = parseInt(localStorage.getItem('chess960_history_limit') || MAX_HISTORY_DEFAULT);
+            if (limit === 0) return;
+
+            const pinnedItems = history.filter(item => item.pinned);
+            const unpinnedItems = history.filter(item => !item.pinned);
+
+            const numUnpinnedToKeep = Math.max(0, limit - pinnedItems.length);
+            history = pinnedItems.concat(unpinnedItems.slice(0, numUnpinnedToKeep));
+        }
+
+        function renderHistory() {
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'История пуста.';
+                li.style.textAlign = 'center';
+                li.style.color = 'var(--text-main-color)';
+                historyList.appendChild(li);
+                clearAllHistoryButton.style.display = 'none';
+                return;
+            }
+            clearAllHistoryButton.style.display = 'block';
+
+            history.forEach(item => {
+                const li = document.createElement('li');
+                li.classList.add('history-item');
+                li.dataset.id = item.id;
+
+                const header = document.createElement('div');
+                header.classList.add('history-item-header');
+                header.innerHTML = `Позиция №: ${item.positionNumber === 'standard' ? 'Стандартная' : item.positionNumber} <br> ${item.timestamp}`;
+                li.appendChild(header);
+
+                const backRankDisplay = document.createElement('div');
+                backRankDisplay.style.fontSize = '1.5rem';
+                backRankDisplay.style.textAlign = 'center';
+                backRankDisplay.style.marginTop = '10px';
+                backRankDisplay.style.color = 'var(--text-main-color)';
+                backRankDisplay.innerHTML = item.backRank.map(p => WHITE_PIECES[p] || '').join('');
+                li.appendChild(backRankDisplay);
+
+                const actions = document.createElement('div');
+                actions.classList.add('history-item-actions');
+
+                const loadButton = document.createElement('button');
+                loadButton.textContent = 'Загрузить';
+                loadButton.classList.add('button-action');
+                loadButton.style.marginTop = '0';
+                loadButton.style.padding = '8px 12px';
+                loadButton.style.fontSize = '0.9rem';
+                loadButton.addEventListener('click', () => {
+                    generateAndDisplayPosition(item.positionNumber);
+                    closeModal(historyModal);
+                });
+                actions.appendChild(loadButton);
+
+                const pinButton = document.createElement('button');
+                pinButton.textContent = item.pinned ? 'Открепить' : 'Закрепить';
+                pinButton.classList.add('pin-button');
+                if (item.pinned) pinButton.classList.add('pinned');
+                pinButton.addEventListener('click', () => togglePinHistoryItem(item.id));
+                actions.appendChild(pinButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Удалить';
+                deleteButton.classList.add('delete-button');
+                deleteButton.addEventListener('click', () => deleteHistoryItem(item.id));
+                actions.appendChild(deleteButton);
+
+                li.appendChild(actions);
+                historyList.appendChild(li);
+            });
+        }
+
+        function togglePinHistoryItem(id) {
+            const itemIndex = history.findIndex(item => item.id === id);
+            if (itemIndex > -1) {
+                history[itemIndex].pinned = !history[itemIndex].pinned;
+                trimHistory();
+                saveHistory();
+                renderHistory();
+            }
+        }
+
+        function deleteHistoryItem(id) {
+            history = history.filter(item => item.id !== id);
+            saveHistory();
+            renderHistory();
+        }
+
+        clearAllHistoryButton.addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите удалить всю историю?')) {
+                history = [];
+                saveHistory();
+                renderHistory();
+            }
+        });
+
+        // --- Initial Setup ---
+
+        window.onload = function() {
+            createEmptyBoard();
+            loadSettings();
+            loadHistory();
+            generateAndDisplayPosition();
+            generateButton.addEventListener('click', () => generateAndDisplayPosition());
+        };
+    </script>
+</body>
+</html>
