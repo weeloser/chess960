@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор Шахмат Фишера</title>
+    <title>Тульская Шахматная Гостиная</title>
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/14650/14650184.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Fixed Light Theme Variables (Classic) */
         :root {
             --bg-gradient-start: #e0eafc;
             --bg-gradient-end: #cfdef3;
@@ -19,9 +19,9 @@
             --button-primary-end: #0056b3;
             --button-hover-start: #0056b3;
             --button-hover-end: #003d80;
-            --text-tulskaya-color: #1a73e8; /* Синий */
-            --text-shahmatnaya-color: #ea4335; /* Красный */
-            --text-gostinaya-color: #1a73e8; /* Синий */
+            --text-tulskaya-color: #1a73e8;
+            --text-shahmatnaya-color: #ea4335;
+            --text-gostinaya-color: #1a73e8;
             --text-main-color: #333;
             --modal-bg: #ffffff;
             --modal-shadow-color: rgba(0, 0, 0, 0.4);
@@ -36,29 +36,33 @@
             --history-delete-hover-bg: #c82333;
             --history-clear-all-bg: #f44336;
             --history-clear-all-hover-bg: #d32f2f;
+
+            --notification-success-bg: #d4edda;
+            --notification-success-border: #28a745;
+            --notification-success-text: #155724;
+            --notification-info-bg: #d1ecf1;
+            --notification-info-border: #17a2b8;
+            --notification-info-text: #0c5460;
         }
 
-        /* 1. Subtle background pattern/texture */
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)),
                         url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="%23000000" opacity="0.05"/></svg>');
-            background-size: cover, 20px 20px; /* Adjust size of pattern */
+            background-size: cover, 20px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Align to start to allow scrolling from top */
-            min-height: 100vh; /* Ensure it takes at least full viewport height */
+            justify-content: flex-start;
+            min-height: 100vh;
             padding: 20px;
             box-sizing: border-box;
-            /* 3. Smooth body background transition (already there) */
             transition: background 0.5s ease;
-            overflow-y: auto; /* Allow vertical scrolling */
-            overflow-x: hidden; /* Hide horizontal overflow */
+            overflow-y: auto;
+            overflow-x: hidden;
             color: var(--text-main-color);
         }
 
-        /* Custom Scrollbar for Webkit browsers (Chrome, Safari) */
         ::-webkit-scrollbar {
             width: 12px;
             height: 12px;
@@ -82,8 +86,7 @@
         .container {
             background-color: var(--container-bg);
             border-radius: 20px;
-            /* 2. Enhanced container shadow/depth */
-            box-shadow: 0 25px 60px var(--container-shadow-color), 0 0 0 10px rgba(255, 255, 255, 0.6); /* Усиленная тень */
+            box-shadow: 0 25px 60px var(--container-shadow-color), 0 0 0 10px rgba(255, 255, 255, 0.6);
             padding: 30px;
             display: flex;
             flex-direction: column;
@@ -94,7 +97,7 @@
             max-width: 95%;
             width: 100%;
             perspective: 1000px;
-            transition: background-color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease; /* Added transform for hover */
+            transition: background-color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease;
         }
         @keyframes containerFadeIn {
             to {
@@ -103,8 +106,8 @@
             }
         }
         .container:hover {
-            transform: translateY(-5px) rotateY(1deg); /* Slightly more pronounced lift on hover */
-            box-shadow: 0 30px 70px var(--container-shadow-color), 0 0 0 12px rgba(255, 255, 255, 0.7); /* Усиленная тень при наведении */
+            transform: translateY(-5px) rotateY(1deg);
+            box-shadow: 0 30px 70px var(--container-shadow-color), 0 0 0 12px rgba(255, 255, 255, 0.7);
         }
 
         .chess-board-wrapper {
@@ -126,10 +129,9 @@
             grid-template-rows: repeat(8, 1fr);
             width: 100%;
             height: 100%;
-            /* 4. Improved board border/shadow */
-            border: 10px solid var(--board-border-color); /* Thicker border */
-            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.5), 0 20px 50px var(--board-shadow-color); /* More pronounced shadow */
-            border-radius: 18px; /* Slightly more rounded */
+            border: 10px solid var(--board-border-color);
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.5), 0 20px 50px var(--board-shadow-color);
+            border-radius: 18px;
             overflow: hidden;
             background-color: #fff;
             transition: border-color 0.5s ease, box-shadow 0.5s ease;
@@ -165,25 +167,32 @@
         .dark {
             background-color: var(--dark-square-color);
         }
-        /* 5. Subtle square hover effect */
         .square:hover {
-            background-color: rgba(0, 0, 0, 0.1); /* Light overlay on hover */
+            background-color: rgba(0, 0, 0, 0.1);
         }
 
         .piece {
             line-height: 1;
-            /* Reverted text-shadow */
-            text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
             position: absolute;
             opacity: 1;
             transform: translateY(0) scale(1) rotateY(0deg);
-            /* Removed pieceFloat animation */
+            font-size: clamp(2rem, 8vw, 3.8rem);
         }
 
-        /* 6. Piece pop-in/out animation refinement */
+        .white-piece {
+            color: #fff;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        }
+
+        .black-piece {
+            color: #000;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+        }
+
+
         .chess-board.animated-appear .piece {
             opacity: 0;
-            transform: translateY(-50px) scale(0.6) rotateY(45deg); /* More dramatic start */
+            transform: translateY(-50px) scale(0.6) rotateY(45deg);
             animation: piecePopIn 0.8s forwards cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
@@ -195,7 +204,6 @@
             0% { opacity: 1; transform: translateY(0) scale(1) rotateY(0deg); }
             100% { opacity: 0; transform: translateY(50px) scale(0.6) rotateY(-45deg); }
         }
-        /* Removed pieceFloat animation keyframes */
 
         .button-generate {
             background: linear-gradient(145deg, var(--button-primary-start), var(--button-primary-end));
@@ -214,7 +222,6 @@
             overflow: hidden;
             letter-spacing: 0.5px;
             transform: scale(1);
-            /* 10. Button text shadow/depth */
             text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
         }
         .button-generate:hover {
@@ -222,25 +229,23 @@
             transform: translateY(-6px) scale(1.03);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
         }
-        /* 15. Subtle button press animation */
         .button-generate:active {
             transform: translateY(-3px) scale(0.98);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
         }
-        /* 14. Generate button "shine" animation */
         .button-generate::before {
             content: '';
             position: absolute;
             top: 0;
-            left: -120%; /* Start further left */
+            left: -120%;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.45); /* Brighter shine */
+            background: rgba(255, 255, 255, 0.45);
             transform: skewX(-30deg);
-            transition: all 0.7s ease-out; /* Slower, smoother shine */
+            transition: all 0.7s ease-out;
         }
         .button-generate:hover::before {
-            left: 120%; /* End further right */
+            left: 120%;
         }
 
         .button-action {
@@ -259,7 +264,6 @@
             overflow: hidden;
             letter-spacing: 0.5px;
             transform: scale(1);
-            /* 10. Button text shadow/depth */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .button-action:hover {
@@ -267,7 +271,6 @@
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
-        /* 15. Subtle button press animation */
         .button-action:active {
             transform: translateY(-1px) scale(0.98);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -304,7 +307,6 @@
             outline: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            /* 10. Button text shadow/depth (for icons) */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .button-icon:hover {
@@ -312,7 +314,6 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
         }
-        /* 15. Subtle button press animation */
         .button-icon:active {
             transform: translateY(-1px) scale(0.95);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -356,13 +357,12 @@
             text-align: center;
             background-color: var(--container-bg);
             color: var(--text-main-color);
-            /* 11. Input field focus animation */
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .position-input:focus {
             outline: none;
             border-color: var(--button-primary-start);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 4px rgba(26, 115, 232, 0.3); /* Stronger glow */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 4px rgba(26, 115, 232, 0.3);
         }
 
         .button-load-by-number {
@@ -380,7 +380,6 @@
             position: relative;
             overflow: hidden;
             letter-spacing: 0.5px;
-            /* 10. Button text shadow/depth */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .button-load-by-number:hover {
@@ -388,7 +387,6 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
-        /* 15. Subtle button press animation */
         .button-load-by-number:active {
             transform: translateY(-1px);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -432,13 +430,12 @@
         .text-tshg {
             font-size: clamp(2rem, 8vw, 3.5rem);
             font-weight: 800;
-            margin-bottom: 30px;
+            margin-bottom: 5px;
             text-align: center;
             line-height: 1.2;
             text-shadow: 3px 3px 7px rgba(0,0,0,0.4);
             transform: translateY(-20px);
             opacity: 0;
-            /* 20. Title text animation (initial load) - refined */
             animation: titleSlideIn 1s 0.2s forwards cubic-bezier(0.23, 1, 0.32, 1);
         }
         @keyframes titleSlideIn {
@@ -448,9 +445,35 @@
             }
         }
 
-        .text-tulskaya { color: var(--text-tulskaya-color); }
-        .text-shahmatnaya { color: var(--text-shahmatnaya-color); }
-        .text-gostinaya { color: var(--text-gostinaya-color); }
+        .text-tulskaya {
+            color: var(--text-tulskaya-color);
+            font-weight: 400;
+        }
+
+        .text-shahmatnaya {
+            color: var(--text-shahmatnaya-color);
+            font-weight: 800;
+        }
+
+        .text-gostinaya {
+            color: var(--text-gostinaya-color);
+            font-weight: 400;
+        }
+
+        .text-chess960 {
+            font-size: clamp(1.2rem, 5vw, 2rem);
+            font-weight: 600;
+            color: #555;
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: translateY(-10px) scale(0.8);
+            animation: chess960Appear 1s 0.6s forwards cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes chess960Appear {
+            0% { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
 
         .contact-info {
             margin-top: 40px;
@@ -459,7 +482,6 @@
             text-align: center;
             opacity: 0;
             transform: translateY(20px);
-            /* 23. Footer subtle animation/fade-in */
             animation: contactFadeIn 1s 1.2s forwards ease-out;
         }
         @keyframes contactFadeIn {
@@ -468,6 +490,7 @@
                 transform: translateY(0);
             }
         }
+
         .contact-info a {
             color: var(--text-shahmatnaya-color);
             text-decoration: none;
@@ -479,7 +502,6 @@
             text-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
         }
 
-        /* Board Coordinates */
         .file-labels, .rank-labels {
             position: absolute;
             display: flex;
@@ -518,7 +540,6 @@
             flex-direction: column;
         }
 
-        /* More Info Section */
         .info-section {
             background-color: var(--container-bg);
             border-radius: 15px;
@@ -527,7 +548,6 @@
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
             max-height: 0;
             overflow: hidden;
-            /* 21. Info section expand/collapse animation - refined */
             transition: max-height 0.8s ease-in-out, padding 0.8s ease-in-out, opacity 0.8s ease-in-out, background-color 0.5s ease;
             opacity: 0;
             width: 100%;
@@ -537,7 +557,7 @@
             flex-direction: column;
         }
         .info-section.active {
-            max-height: 80vh; /* Sufficiently large to contain content */
+            max-height: 80vh;
             padding: 25px;
             opacity: 1;
             overflow-y: auto;
@@ -553,26 +573,32 @@
             list-style: none;
             padding: 0;
             margin-bottom: 20px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
         .info-section ul li {
             font-size: 1rem;
             color: var(--text-main-color);
             line-height: 1.4;
+            background-color: #f8f8f8;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
         }
         .info-section ul li strong {
             color: var(--text-shahmatnaya-color);
+            display: block;
+            margin-bottom: 5px;
         }
-        .info-section p {
-            font-size: 0.95rem;
-            color: var(--text-main-color);
-            line-height: 1.5;
-            margin-bottom: 10px;
+        .info-item-general {
+            background-color: var(--notification-info-bg);
+            border: 1px solid var(--notification-info-border);
+            color: var(--notification-info-text);
         }
-        .info-section p strong {
-            color: var(--text-gostinaya-color);
+        .info-item-pieces {
+            background-color: var(--history-item-bg);
+            border: 1px solid #eee;
         }
 
         .info-hide-button {
@@ -589,7 +615,6 @@
             width: fit-content;
             margin-left: auto;
             margin-right: auto;
-            /* 15. Subtle button press animation */
             transform: scale(1);
         }
         .info-hide-button:hover {
@@ -601,7 +626,6 @@
         }
 
 
-        /* Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -615,9 +639,7 @@
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
-            /* 16. Modal open/close animation */
             transition: opacity 0.4s ease, visibility 0.4s ease;
-            /* 17. Modal backdrop blur */
             backdrop-filter: blur(5px);
         }
         .modal-overlay.active {
@@ -631,9 +653,8 @@
             box-shadow: 0 15px 40px var(--modal-shadow-color);
             max-width: 500px;
             width: 90%;
-            transform: translateY(-80px) scale(0.7); /* More dramatic start */
+            transform: translateY(-80px) scale(0.7);
             opacity: 0;
-            /* 16. Modal open/close animation - refined */
             transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.5s ease, background-color 0.5s ease;
             position: relative;
             color: var(--text-main-color);
@@ -655,7 +676,7 @@
         }
         .modal-close:hover {
             color: #333;
-            transform: rotate(90deg) scale(1.1); /* Slight scale on hover */
+            transform: rotate(90deg) scale(1.1);
         }
         .modal-content h2 {
             font-size: 1.8rem;
@@ -670,14 +691,12 @@
             padding-right: 10px;
         }
 
-        /* Settings specific styles */
         .settings-option {
             margin-bottom: 20px;
             padding: 15px;
             border: 1px solid #eee;
             border-radius: 10px;
             background-color: #fcfcfc;
-            /* 19. Settings option hover */
             box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
         }
@@ -685,7 +704,7 @@
             margin-bottom: 0;
         }
         .settings-option:hover {
-            box-shadow: inset 0 0 8px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.08); /* Lift and shadow on hover */
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.08);
             background-color: #f8f8f8;
         }
         .settings-option label {
@@ -707,14 +726,13 @@
             border-radius: 8px;
             cursor: pointer;
             border: 3px solid transparent;
-            /* 20. Color swatch selection animation - refined */
             transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .color-swatch.selected {
             border-color: var(--text-shahmatnaya-color);
-            transform: scale(1.18); /* Slightly larger scale */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 20px var(--text-shahmatnaya-color); /* Stronger glow */
+            transform: scale(1.18);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 20px var(--text-shahmatnaya-color);
         }
         .color-swatch:hover {
             transform: scale(1.1);
@@ -730,7 +748,6 @@
             background-color: var(--container-bg);
             color: var(--text-main-color);
             margin-top: 5px;
-            /* 11. Input field focus animation */
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .settings-option input[type="number"]:focus {
@@ -739,7 +756,6 @@
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 4px rgba(26, 115, 232, 0.3);
         }
 
-        /* Toggle Switch */
         .switch-container {
             display: flex;
             align-items: center;
@@ -801,7 +817,6 @@
           transform: translateX(26px);
         }
 
-        /* History specific styles */
         .history-list {
             list-style: none;
             padding: 0;
@@ -881,7 +896,6 @@
             width: fit-content;
             margin-left: auto;
             margin-right: auto;
-            /* 15. Subtle button press animation */
             transform: scale(1);
         }
         .history-clear-all:hover {
@@ -891,7 +905,6 @@
             transform: translateY(0) scale(0.98);
         }
 
-        /* Footer styles */
         .app-footer {
             background-color: #222;
             color: #f0f0f0;
@@ -918,7 +931,6 @@
             text-decoration: underline;
         }
 
-        /* 12. Error message animation */
         .error-message {
             color: #dc3545;
             font-size: 0.85rem;
@@ -928,20 +940,79 @@
             opacity: 0;
             height: 0;
             overflow: hidden;
-            transition: opacity 0.4s ease, height 0.4s ease; /* Slower transition */
+            transition: opacity 0.4s ease, height 0.4s ease;
         }
         .error-message.active {
             opacity: 1;
             height: auto;
         }
 
-        /* Responsive adjustments */
+        #notificationContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .notification {
+            background-color: var(--notification-info-bg);
+            border: 1px solid var(--notification-info-border);
+            color: var(--notification-info-text);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateX(100%);
+            animation: slideIn 0.5s forwards ease-out, fadeOut 0.5s 2.5s forwards ease-in;
+            min-width: 250px;
+            max-width: 350px;
+            pointer-events: auto;
+        }
+
+        .notification.success {
+            background-color: var(--notification-success-bg);
+            border: 1px solid var(--notification-success-border);
+            color: var(--notification-success-text);
+        }
+
+        .notification.info {
+            background-color: var(--notification-info-bg);
+            border: 1px solid var(--notification-info-border);
+            color: var(--notification-info-text);
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+
         @media (max-width: 640px) {
             .container {
                 padding: 20px;
             }
             .text-tshg {
                 font-size: clamp(1.5rem, 7vw, 2.5rem);
+            }
+            .text-chess960 {
+                font-size: clamp(1rem, 4vw, 1.5rem);
             }
             .button-generate {
                 padding: 15px 25px;
@@ -992,6 +1063,17 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+            #notificationContainer {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                width: auto;
+                align-items: flex-end;
+            }
+            .notification {
+                width: 100%;
+                max-width: none;
+            }
         }
     </style>
 </head>
@@ -1004,6 +1086,7 @@
                 <span class="text-gostinaya">Гостиная</span>
             </div>
         </a>
+        <div class="text-chess960">Chess960</div>
 
         <div class="chess-board-wrapper">
             <div id="chessBoard" class="chess-board"></div>
@@ -1021,16 +1104,15 @@
                 <p id="positionErrorMessage" class="error-message"></p>
             </div>
             <div class="secondary-actions">
-                <button id="moreInfoButton" class="button-icon"> &#x2753; </button> <!-- Question mark icon -->
-                <button id="historyButton" class="button-icon"> &#128466; </button> <!-- History icon -->
-                <button id="settingsButton" class="button-icon"> &#9881; </button> <!-- Gear icon -->
+                <button id="moreInfoButton" class="button-icon"> &#x2753; </button>
+                <button id="historyButton" class="button-icon"> &#128466; </button>
+                <button id="settingsButton" class="button-icon"> &#9881; </button>
             </div>
         </div>
 
         <div id="infoSection" class="info-section">
             <h3>Информация о текущей позиции</h3>
             <ul id="piecePositionsList">
-                <!-- Piece positions will be inserted here by JS -->
             </ul>
             <h3>Правила расстановки Шахмат Фишера (Chess960)</h3>
             <ul>
@@ -1047,7 +1129,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settingsModal" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close">&times;</button>
@@ -1057,13 +1138,9 @@
                     <label>Выберите дизайн доски:</label>
                     <div class="color-palette" id="boardThemes">
                         <div class="color-swatch" data-light-color="#f0d9b5" data-dark-color="#b58863" style="background-color: #f0d9b5; border: 1px solid #b58863;"></div>
-                        <div class="color-swatch" data-light-color="#ffffff" data-dark-color="#888888" style="background-color: #ffffff; border: 1px solid #888888;"></div>
-                        <div class="color-swatch" data-light-color="#e0e0e0" data-dark-color="#404040" style="background-color: #e0e0e0; border: 1px solid #404040;"></div>
-                        <div class="color-swatch selected" data-light-color="#add8e6" data-dark-color="#4682b4" style="background-color: #add8e6; border: 1px solid #4682b4;"></div>
-                        <div class="color-swatch" data-light-color="#c0c0c0" data-dark-color="#404040" style="background-color: #c0c0c0; border: 1px solid #404040;"></div>
-                        <div class="color-swatch" data-light-color="#ffe4b5" data-dark-color="#8b4513" style="background-color: #ffe4b5; border: 1px solid #8b4513;"></div>
-                        <div class="color-swatch" data-light-color="#769656" data-dark-color="#eeeed2" style="background-color: #769656; border: 1px solid #eeeed2;"></div> <!-- Green/Cream -->
-                        <div class="color-swatch" data-light-color="#b8c2d9" data-dark-color="#6a7b9c" style="background-color: #b8c2d9; border: 1px solid #6a7b9c;"></div> <!-- Blue-Grey -->
+                        <div class="color-swatch" data-light-color="#add8e6" data-dark-color="#4682b4" style="background-color: #add8e6; border: 1px solid #4682b4;"></div>
+                        <div class="color-swatch" data-light-color="#769656" data-dark-color="#eeeed2" style="background-color: #769656; border: 1px solid #eeeed2;"></div>
+                        <div class="color-swatch" data-light-color="#b8c2d9" data-dark-color="#6a7b9c" style="background-color: #b8c2d9; border: 1px solid #6a7b9c;"></div>
                     </div>
                 </div>
                 <div class="settings-option">
@@ -1089,14 +1166,12 @@
         </div>
     </div>
 
-    <!-- History Modal -->
     <div id="historyModal" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close">&times;</button>
             <h2>История позиций</h2>
             <div class="modal-body">
                 <ul id="historyList" class="history-list">
-                    <!-- History items will be loaded here -->
                 </ul>
                 <button id="clearAllHistoryButton" class="history-clear-all">Удалить всю историю</button>
             </div>
@@ -1112,15 +1187,14 @@
         <p>Телефон: +7 (915) 789-789-6</p>
     </footer>
 
-    <script>
-        const WHITE_PIECES = {
-            'R': '&#9814;', 'N': '&#9816;', 'B': '&#9815;',
-            'Q': '&#9813;', 'K': '&#9812;', 'P': '&#9817;'
-        };
+    <div id="notificationContainer"></div>
 
-        const BLACK_PIECES = {
-            'R': '&#9820;', 'N': '&#9822;', 'B': '&#9821;',
-            'Q': '&#9819;', 'K': '&#9818;', 'P': '&#9823;'
+    <script>
+        const UNICODE_PIECES = {
+            'K_W': '&#9812;', 'Q_W': '&#9813;', 'R_W': '&#9814;',
+            'B_W': '&#9815;', 'N_W': '&#9816;', 'P_W': '&#9817;',
+            'K_B': '&#9818;', 'Q_B': '&#9819;', 'R_B': '&#9820;',
+            'B_B': '&#9821;', 'N_B': '&#9822;', 'P_B': '&#9823;'
         };
 
         const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -1149,13 +1223,12 @@
         const positionNumberInput = document.getElementById('positionNumberInput');
         const loadPositionButton = document.getElementById('loadPositionButton');
         const positionErrorMessage = document.getElementById('positionErrorMessage');
+        const notificationContainer = document.getElementById('notificationContainer');
 
 
         let currentBackRank = [];
         let history = [];
         const MAX_HISTORY_DEFAULT = 30;
-
-        // --- Utility Functions ---
 
         function getFileChar(index) {
             return FILES[index];
@@ -1177,7 +1250,16 @@
             }
         }
 
-        // --- Board Initialization and Rendering ---
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.classList.add('notification', type);
+            notification.textContent = message;
+            notificationContainer.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
 
         function createEmptyBoard() {
             boardElement.innerHTML = '';
@@ -1215,28 +1297,21 @@
             }
         }
 
-        // This is the core Chess960 algorithm based on Wikipedia's numbering scheme.
-        // It maps a number from 0 to 959 to a unique back-rank setup.
         function getChess960BackRank(positionNumber) {
             const backRank = Array(8).fill(null);
             let tempIndex = positionNumber;
 
-            // Step 1: Place Bishops
-            // B1_idx determines position of light-square Bishop (b, d, f, h)
             const b1_idx = tempIndex % 4;
             tempIndex = Math.floor(tempIndex / 4);
-            // B2_idx determines position of dark-square Bishop (a, c, e, g)
             const b2_idx = tempIndex % 4;
             tempIndex = Math.floor(tempIndex / 4);
 
-            const lightSquarePositions = [1, 3, 5, 7]; // Indices for b, d, f, h
-            const darkSquarePositions = [0, 2, 4, 6]; // Indices for a, c, e, g
+            const lightSquarePositions = [1, 3, 5, 7];
+            const darkSquarePositions = [0, 2, 4, 6];
 
             backRank[lightSquarePositions[b1_idx]] = 'B';
             backRank[darkSquarePositions[b2_idx]] = 'B';
 
-            // Step 2: Place Queen
-            // q_idx determines position of Queen in the remaining 6 available slots
             const q_idx = tempIndex % 6;
             tempIndex = Math.floor(tempIndex / 6);
 
@@ -1248,18 +1323,13 @@
             }
             backRank[currentAvailableSlots[q_idx]] = 'Q';
 
-            // Step 3: Place Knights
-            // n_combo_idx (0-9) determines the placement of the two Knights
-            // within the remaining 5 available slots.
-            const n_combo_idx = tempIndex; // This is the N4 from Wikipedia
+            const n_combo_idx = tempIndex;
 
-            // This array maps the n_combo_idx to the relative positions (0-4)
-            // within the 5 available slots.
             const knightCombinationsIn5Slots = [
-                [0, 1], [0, 2], [0, 3], [0, 4], // N N _ _ _
-                [1, 2], [1, 3], [1, 4],         // _ N N _ _
-                [2, 3], [2, 4],                 // _ _ N N _
-                [3, 4]                          // _ _ _ N N
+                [0, 1], [0, 2], [0, 3], [0, 4],
+                [1, 2], [1, 3], [1, 4],
+                [2, 3], [2, 4],
+                [3, 4]
             ];
 
             const remainingSlotsAfterBQ = [];
@@ -1268,22 +1338,17 @@
                     remainingSlotsAfterBQ.push(i);
                 }
             }
-            // At this point, remainingSlotsAfterBQ should have exactly 5 elements.
 
             const selectedKnightRelativeIndices = knightCombinationsIn5Slots[n_combo_idx];
             backRank[remainingSlotsAfterBQ[selectedKnightRelativeIndices[0]]] = 'N';
             backRank[remainingSlotsAfterBQ[selectedKnightRelativeIndices[1]]] = 'N';
 
-            // Step 4: Place King and Rooks
-            // The King must be between the two Rooks. There is only one way to place them
-            // in the final 3 remaining slots.
             const finalThreeFreeSquares = [];
             for (let i = 0; i < 8; i++) {
                 if (backRank[i] === null) {
                     finalThreeFreeSquares.push(i);
                 }
             }
-            // At this point, finalThreeFreeSquares should have exactly 3 elements.
 
             backRank[finalThreeFreeSquares[0]] = 'R';
             backRank[finalThreeFreeSquares[1]] = 'K';
@@ -1292,9 +1357,9 @@
             return backRank;
         }
 
-
-        function renderFullBoard(whiteBackRank, isInitialLoad = false) {
+        async function renderFullBoard(whiteBackRank, isInitialLoad = false) {
             const oldPieces = document.querySelectorAll('.piece');
+            const pieceData = [];
 
             const renderNewPieces = () => {
                 for (let i = 0; i < 8; i++) {
@@ -1304,14 +1369,12 @@
                     }
                 }
 
-                const pieceData = [];
-
                 whiteBackRank.forEach((piece, index) => {
                     if (piece) {
                         const squareElement = document.getElementById(`s7${index}`);
                         const pieceElement = document.createElement('div');
                         pieceElement.classList.add('piece', 'white-piece');
-                        pieceElement.innerHTML = WHITE_PIECES[piece];
+                        pieceElement.innerHTML = UNICODE_PIECES[`${piece}_W`];
                         if (!isInitialLoad) {
                             pieceElement.style.animationDelay = `${index * 0.04}s`;
                             pieceElement.style.opacity = 0;
@@ -1329,7 +1392,7 @@
                     const squareElement = document.getElementById(`s6${j}`);
                     const pieceElement = document.createElement('div');
                     pieceElement.classList.add('piece', 'white-piece');
-                    pieceElement.innerHTML = WHITE_PIECES['P'];
+                    pieceElement.innerHTML = UNICODE_PIECES['P_W'];
                     if (!isInitialLoad) {
                         pieceElement.style.animationDelay = `${(j + 8) * 0.04}s`;
                         pieceElement.style.opacity = 0;
@@ -1347,7 +1410,7 @@
                         const squareElement = document.getElementById(`s0${index}`);
                         const pieceElement = document.createElement('div');
                         pieceElement.classList.add('piece', 'black-piece');
-                        pieceElement.innerHTML = BLACK_PIECES[piece];
+                        pieceElement.innerHTML = UNICODE_PIECES[`${piece}_B`];
                         if (!isInitialLoad) {
                             pieceElement.style.animationDelay = `${(index + 16) * 0.04}s`;
                             pieceElement.style.opacity = 0;
@@ -1365,7 +1428,7 @@
                     const squareElement = document.getElementById(`s1${j}`);
                     const pieceElement = document.createElement('div');
                     pieceElement.classList.add('piece', 'black-piece');
-                    pieceElement.innerHTML = BLACK_PIECES['P'];
+                    pieceElement.innerHTML = UNICODE_PIECES['P_B'];
                     if (!isInitialLoad) {
                         pieceElement.style.animationDelay = `${(j + 24) * 0.04}s`;
                         pieceElement.style.opacity = 0;
@@ -1379,7 +1442,6 @@
                 }
 
                 currentBackRank = whiteBackRank;
-                updatePiecePositionsInfo(pieceData);
 
                 if (isInitialLoad) {
                     boardElement.style.opacity = 1;
@@ -1388,19 +1450,24 @@
                 } else {
                     boardElement.classList.add('animated-appear');
                 }
+                return pieceData;
             };
 
             if (oldPieces.length > 0 && !isInitialLoad) {
                 oldPieces.forEach(piece => {
                     piece.style.animation = 'piecePopOut 0.3s forwards ease-in';
                 });
-                setTimeout(renderNewPieces, 300);
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        resolve(renderNewPieces());
+                    }, 300);
+                });
             } else {
-                renderNewPieces();
+                return Promise.resolve(renderNewPieces());
             }
         }
 
-        function generateAndDisplayPosition(posNum = null, source = null) {
+        async function generateAndDisplayPosition(posNum = null, source = null) {
             let whiteBackRank;
             let actualPositionNumber = posNum;
             const isFirstLaunch = localStorage.getItem('chess960_first_launch') === null;
@@ -1420,16 +1487,30 @@
                 }
             }
 
-            renderFullBoard(whiteBackRank, isFirstLaunch);
+            const generationTimestamp = new Date();
+            const formattedGenerationTime = generationTimestamp.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const isSaved = isHistoryEnabled();
+
+            const pieceData = await renderFullBoard(whiteBackRank, isFirstLaunch);
+
             if (source !== 'from-history') {
                 addPositionToHistory(actualPositionNumber, whiteBackRank);
+                showNotification(`Позиция №: ${actualPositionNumber === 'standard' ? 'Стандартная' : actualPositionNumber} отображается на доске`, 'info');
             }
+            updatePiecePositionsInfo(pieceData, actualPositionNumber, formattedGenerationTime, isSaved);
         }
 
-        // --- Info Section Logic ---
-
-        function updatePiecePositionsInfo(pieceData) {
+        function updatePiecePositionsInfo(pieceData, positionNumber, generationTime, isSavedToHistory) {
             piecePositionsList.innerHTML = '';
+
+            const generalInfoLi = document.createElement('li');
+            generalInfoLi.classList.add('info-item-general');
+            generalInfoLi.innerHTML = `
+                <strong>Номер позиции:</strong> ${positionNumber === 'standard' ? 'Стандартная' : positionNumber}<br>
+                <strong>Время генерации:</strong> ${generationTime}<br>
+                <strong>Сохранено в историю:</strong> ${isSavedToHistory ? '&#10003; Да' : '&#10007; Нет'}
+            `;
+            piecePositionsList.appendChild(generalInfoLi);
 
             const whitePieces = pieceData.filter(p => p.color === 'white');
             const blackPieces = pieceData.filter(p => p.color === 'black');
@@ -1443,13 +1524,16 @@
                 const pawns = pieces.filter(p => p.type === 'P').map(p => p.square).join(', ');
 
                 const li = document.createElement('li');
-                li.innerHTML = `<strong>${colorText}</strong>:<br>` +
-                               `Король: ${king ? king.square : 'N/A'}<br>` +
-                               `Ферзь: ${queen ? queen.square : 'N/A'}<br>` +
-                               `Ладьи: ${rooks}<br>` +
-                               `Слоны: ${bishops}<br>` +
-                               `Кони: ${knights}<br>` +
-                               `Пешки: ${pawns}`;
+                li.classList.add('info-item-pieces');
+                li.innerHTML = `
+                    <strong>${colorText}</strong>:<br>
+                    Король: ${king ? king.square : 'N/A'}<br>
+                    Ферзь: ${queen ? queen.square : 'N/A'}<br>
+                    Ладьи: ${rooks}<br>
+                    Слоны: ${bishops}<br>
+                    Кони: ${knights}<br>
+                    Пешки: ${pawns}
+                `;
                 piecePositionsList.appendChild(li);
             };
 
@@ -1463,8 +1547,6 @@
 
         moreInfoButton.addEventListener('click', toggleInfoSection);
         hideInfoButton.addEventListener('click', toggleInfoSection);
-
-        // --- Modal Logic (Settings & History) ---
 
         function openModal(modalElement) {
             modalElement.classList.add('active');
@@ -1490,8 +1572,6 @@
                 closeModal(historyModal);
             }
         });
-
-        // --- Settings Logic ---
 
         settingsButton.addEventListener('click', () => {
             openModal(settingsModal);
@@ -1538,6 +1618,9 @@
                 history = [];
                 saveHistory();
                 renderHistory();
+                showNotification('Сохранение истории выключено', 'info');
+            } else {
+                showNotification('Сохранение истории включено', 'success');
             }
         });
 
@@ -1551,6 +1634,7 @@
             trimHistory();
             saveHistory();
             renderHistory();
+            showNotification(`Лимит истории установлен на ${limit} позиций`, 'info');
         });
 
         function isHistoryEnabled() {
@@ -1585,8 +1669,6 @@
             historyLimitOption.style.display = isHistoryEnabled() ? 'block' : 'none';
             updateHistoryButtonVisibility();
         }
-
-        // --- History Logic ---
 
         historyButton.addEventListener('click', () => {
             renderHistory();
@@ -1672,7 +1754,7 @@
                 backRankDisplay.style.textAlign = 'center';
                 backRankDisplay.style.marginTop = '10px';
                 backRankDisplay.style.color = 'var(--text-main-color)';
-                backRankDisplay.innerHTML = item.backRank.map(p => WHITE_PIECES[p] || '').join('');
+                backRankDisplay.innerHTML = item.backRank.map(p => UNICODE_PIECES[`${p}_W`] || '').join('');
                 li.appendChild(backRankDisplay);
 
                 const actions = document.createElement('div');
@@ -1687,6 +1769,7 @@
                 loadButton.addEventListener('click', () => {
                     generateAndDisplayPosition(item.positionNumber, 'from-history');
                     closeModal(historyModal);
+                    showNotification(`Позиция №: ${item.positionNumber === 'standard' ? 'Стандартная' : item.positionNumber} загружена из истории`, 'info');
                 });
                 actions.appendChild(loadButton);
 
@@ -1715,6 +1798,7 @@
                 trimHistory();
                 saveHistory();
                 renderHistory();
+                showNotification(`Позиция ${history[itemIndex].pinned ? 'закреплена' : 'откреплена'}`, 'success');
             }
         }
 
@@ -1722,35 +1806,62 @@
             history = history.filter(item => item.id !== id);
             saveHistory();
             renderHistory();
+            showNotification('Позиция удалена', 'success');
         }
 
         clearAllHistoryButton.addEventListener('click', () => {
-            if (confirm('Вы уверены, что хотите удалить всю историю?')) {
+            const confirmationModal = document.createElement('div');
+            confirmationModal.classList.add('modal-overlay', 'active');
+            confirmationModal.innerHTML = `
+                <div class="modal-content">
+                    <h2>Подтверждение</h2>
+                    <p style="text-align: center; margin-bottom: 20px;">Вы уверены, что хотите удалить всю историю?</p>
+                    <div style="display: flex; justify-content: center; gap: 15px;">
+                        <button id="confirmClearHistory" class="button-action" style="background: var(--history-delete-bg);">Да, удалить</button>
+                        <button id="cancelClearHistory" class="button-action">Отмена</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmationModal);
+
+            document.getElementById('confirmClearHistory').addEventListener('click', () => {
                 history = [];
                 saveHistory();
                 renderHistory();
-            }
+                showNotification('Вся история удалена', 'success');
+                confirmationModal.remove();
+            });
+
+            document.getElementById('cancelClearHistory').addEventListener('click', () => {
+                confirmationModal.remove();
+            });
+
+            confirmationModal.addEventListener('click', (event) => {
+                if (event.target === confirmationModal) {
+                    confirmationModal.remove();
+                }
+            });
         });
 
-        // --- Initial Setup ---
-
-        window.onload = function() {
+        window.onload = async function() {
             createEmptyBoard();
             loadSettings();
             loadHistory();
-            generateAndDisplayPosition();
+            await generateAndDisplayPosition();
+
             generateButton.addEventListener('click', () => generateAndDisplayPosition());
 
-            loadPositionButton.addEventListener('click', () => {
+            loadPositionButton.addEventListener('click', async () => {
                 const posNum = parseInt(positionNumberInput.value);
                 const errorMessageElement = document.getElementById('positionErrorMessage');
-                errorMessageElement.classList.remove('active'); // Hide any previous error
+                errorMessageElement.classList.remove('active');
 
                 if (isNaN(posNum) || posNum < 0 || posNum > 959) {
                     positionNumberInput.style.borderColor = 'red';
                     positionNumberInput.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 3px rgba(255,0,0,0.4)';
                     errorMessageElement.textContent = 'Введите число от 0 до 959.';
                     errorMessageElement.classList.add('active');
+                    showNotification('Ошибка: Введите число от 0 до 959.', 'info');
 
                     setTimeout(() => {
                         positionNumberInput.style.borderColor = '#ccc';
@@ -1763,7 +1874,7 @@
                 positionNumberInput.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.1)';
                 errorMessageElement.classList.remove('active');
 
-                generateAndDisplayPosition(posNum);
+                await generateAndDisplayPosition(posNum);
             });
         };
     </script>
