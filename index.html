@@ -38,24 +38,52 @@
             --history-clear-all-hover-bg: #d32f2f;
         }
 
+        /* 1. Subtle background pattern/texture */
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="%23000000" opacity="0.05"/></svg>');
+            background-size: cover, 20px 20px; /* Adjust size of pattern */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            justify-content: flex-start; /* Align to start to allow scrolling from top */
+            min-height: 100vh; /* Ensure it takes at least full viewport height */
             padding: 20px;
             box-sizing: border-box;
+            /* 3. Smooth body background transition (already there) */
             transition: background 0.5s ease;
-            overflow-x: hidden;
+            overflow-y: auto; /* Allow vertical scrolling */
+            overflow-x: hidden; /* Hide horizontal overflow */
             color: var(--text-main-color);
         }
+
+        /* Custom Scrollbar for Webkit browsers (Chrome, Safari) */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--button-primary-start);
+            border-radius: 10px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--button-hover-start);
+        }
+
         .container {
             background-color: var(--container-bg);
             border-radius: 20px;
-            box-shadow: 0 20px 50px var(--container-shadow-color), 0 0 0 8px rgba(255, 255, 255, 0.5); /* Усиленная тень */
+            /* 2. Enhanced container shadow/depth */
+            box-shadow: 0 25px 60px var(--container-shadow-color), 0 0 0 10px rgba(255, 255, 255, 0.6); /* Усиленная тень */
             padding: 30px;
             display: flex;
             flex-direction: column;
@@ -66,7 +94,7 @@
             max-width: 95%;
             width: 100%;
             perspective: 1000px;
-            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+            transition: background-color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease; /* Added transform for hover */
         }
         @keyframes containerFadeIn {
             to {
@@ -75,9 +103,8 @@
             }
         }
         .container:hover {
-            transform: translateY(0) rotateY(2deg);
-            box-shadow: 0 25px 60px var(--container-shadow-color), 0 0 0 8px rgba(255, 255, 255, 0.6); /* Усиленная тень при наведении */
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform: translateY(-5px) rotateY(1deg); /* Slightly more pronounced lift on hover */
+            box-shadow: 0 30px 70px var(--container-shadow-color), 0 0 0 12px rgba(255, 255, 255, 0.7); /* Усиленная тень при наведении */
         }
 
         .chess-board-wrapper {
@@ -99,9 +126,10 @@
             grid-template-rows: repeat(8, 1fr);
             width: 100%;
             height: 100%;
-            border: 8px solid var(--board-border-color);
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4), 0 15px 40px var(--board-shadow-color);
-            border-radius: 15px;
+            /* 4. Improved board border/shadow */
+            border: 10px solid var(--board-border-color); /* Thicker border */
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.5), 0 20px 50px var(--board-shadow-color); /* More pronounced shadow */
+            border-radius: 18px; /* Slightly more rounded */
             overflow: hidden;
             background-color: #fff;
             transition: border-color 0.5s ease, box-shadow 0.5s ease;
@@ -137,42 +165,37 @@
         .dark {
             background-color: var(--dark-square-color);
         }
-        .piece {
-            line-height: 1;
-            text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
-            position: absolute;
-            opacity: 1; /* Default to visible */
-            transform: translateY(0) scale(1) rotateY(0deg); /* Default to normal */
-        }
-        .chess-board.animated-appear .piece {
-            opacity: 0;
-            transform: translateY(-40px) scale(0.7) rotateY(30deg);
-            animation: piecePopIn 0.7s forwards cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        /* 5. Subtle square hover effect */
+        .square:hover {
+            background-color: rgba(0, 0, 0, 0.1); /* Light overlay on hover */
         }
 
-        .black-piece {
-            color: #333;
+        .piece {
+            line-height: 1;
+            /* Reverted text-shadow */
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            position: absolute;
+            opacity: 1;
+            transform: translateY(0) scale(1) rotateY(0deg);
+            /* Removed pieceFloat animation */
         }
-        .white-piece {
-            color: #eee;
+
+        /* 6. Piece pop-in/out animation refinement */
+        .chess-board.animated-appear .piece {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.6) rotateY(45deg); /* More dramatic start */
+            animation: piecePopIn 0.8s forwards cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
         @keyframes piecePopIn {
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1) rotateY(0deg);
-            }
+            0% { opacity: 0; transform: translateY(-50px) scale(0.6) rotateY(45deg); }
+            100% { opacity: 1; transform: translateY(0) scale(1) rotateY(0deg); }
         }
         @keyframes piecePopOut {
-            from {
-                opacity: 1;
-                transform: translateY(0) scale(1) rotateY(0deg);
-            }
-            to {
-                opacity: 0;
-                transform: translateY(40px) scale(0.7) rotateY(-30deg);
-            }
+            0% { opacity: 1; transform: translateY(0) scale(1) rotateY(0deg); }
+            100% { opacity: 0; transform: translateY(50px) scale(0.6) rotateY(-45deg); }
         }
+        /* Removed pieceFloat animation keyframes */
 
         .button-generate {
             background: linear-gradient(145deg, var(--button-primary-start), var(--button-primary-end));
@@ -191,36 +214,39 @@
             overflow: hidden;
             letter-spacing: 0.5px;
             transform: scale(1);
+            /* 10. Button text shadow/depth */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
         }
         .button-generate:hover {
             background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
             transform: translateY(-6px) scale(1.03);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
         }
+        /* 15. Subtle button press animation */
         .button-generate:active {
             transform: translateY(-3px) scale(0.98);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
         }
+        /* 14. Generate button "shine" animation */
         .button-generate::before {
             content: '';
             position: absolute;
             top: 0;
-            left: -100%;
+            left: -120%; /* Start further left */
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.45); /* Brighter shine */
             transform: skewX(-30deg);
-            transition: all 0.6s ease;
+            transition: all 0.7s ease-out; /* Slower, smoother shine */
         }
         .button-generate:hover::before {
-            left: 100%;
+            left: 120%; /* End further right */
         }
 
-        /* button-action is now only for the "Load" and "Pin/Unpin/Delete" buttons in history modal */
         .button-action {
             background: linear-gradient(145deg, var(--button-primary-start), var(--button-primary-end));
             color: white;
-            padding: 8px 12px; /* Smaller padding for these specific actions */
+            padding: 8px 12px;
             border-radius: 8px;
             font-weight: 600;
             font-size: 0.9rem;
@@ -233,17 +259,20 @@
             overflow: hidden;
             letter-spacing: 0.5px;
             transform: scale(1);
+            /* 10. Button text shadow/depth */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .button-action:hover {
             background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
             transform: translateY(-2px) scale(1.02);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
+        /* 15. Subtle button press animation */
         .button-action:active {
             transform: translateY(-1px) scale(0.98);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
         }
-        .button-action::before { /* Still keep the shine effect for these smaller action buttons */
+        .button-action::before {
             content: '';
             position: absolute;
             top: 0;
@@ -275,12 +304,15 @@
             outline: none;
             cursor: pointer;
             transition: all 0.3s ease;
+            /* 10. Button text shadow/depth (for icons) */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
         .button-icon:hover {
             transform: translateY(-3px) scale(1.1);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
         }
+        /* 15. Subtle button press animation */
         .button-icon:active {
             transform: translateY(-1px) scale(0.95);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
@@ -302,6 +334,80 @@
             justify-content: center;
             width: 100%;
         }
+
+        .search-position-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        .position-input {
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            flex-grow: 1;
+            max-width: 180px;
+            text-align: center;
+            background-color: var(--container-bg);
+            color: var(--text-main-color);
+            /* 11. Input field focus animation */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .position-input:focus {
+            outline: none;
+            border-color: var(--button-primary-start);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 4px rgba(26, 115, 232, 0.3); /* Stronger glow */
+        }
+
+        .button-load-by-number {
+            background: linear-gradient(145deg, var(--button-primary-start), var(--button-primary-end));
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            /* 10. Button text shadow/depth */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .button-load-by-number:hover {
+            background: linear-gradient(145deg, var(--button-hover-start), var(--button-hover-end));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        /* 15. Subtle button press animation */
+        .button-load-by-number:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+        .button-load-by-number::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: skewX(-30deg);
+            transition: all 0.5s ease;
+        }
+        .button-load-by-number:hover::before {
+            left: 100%;
+        }
+
 
         .secondary-actions {
             display: flex;
@@ -332,7 +438,8 @@
             text-shadow: 3px 3px 7px rgba(0,0,0,0.4);
             transform: translateY(-20px);
             opacity: 0;
-            animation: titleSlideIn 0.8s 0.2s forwards ease-out;
+            /* 20. Title text animation (initial load) - refined */
+            animation: titleSlideIn 1s 0.2s forwards cubic-bezier(0.23, 1, 0.32, 1);
         }
         @keyframes titleSlideIn {
             to {
@@ -340,6 +447,7 @@
                 transform: translateY(0);
             }
         }
+
         .text-tulskaya { color: var(--text-tulskaya-color); }
         .text-shahmatnaya { color: var(--text-shahmatnaya-color); }
         .text-gostinaya { color: var(--text-gostinaya-color); }
@@ -351,6 +459,7 @@
             text-align: center;
             opacity: 0;
             transform: translateY(20px);
+            /* 23. Footer subtle animation/fade-in */
             animation: contactFadeIn 1s 1.2s forwards ease-out;
         }
         @keyframes contactFadeIn {
@@ -418,16 +527,17 @@
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.7s ease-in-out, padding 0.7s ease-in-out, opacity 0.7s ease-in-out, background-color 0.5s ease;
+            /* 21. Info section expand/collapse animation - refined */
+            transition: max-height 0.8s ease-in-out, padding 0.8s ease-in-out, opacity 0.8s ease-in-out, background-color 0.5s ease;
             opacity: 0;
             width: 100%;
             box-sizing: border-box;
             color: var(--text-main-color);
-            display: flex; /* Use flexbox for internal layout */
+            display: flex;
             flex-direction: column;
         }
         .info-section.active {
-            max-height: 80vh;
+            max-height: 80vh; /* Sufficiently large to contain content */
             padding: 25px;
             opacity: 1;
             overflow-y: auto;
@@ -466,12 +576,12 @@
         }
 
         .info-hide-button {
-            background-color: #f0f0f0; /* Lighter background */
+            background-color: #f0f0f0;
             color: #555;
             padding: 10px 20px;
             border-radius: 10px;
             font-weight: 600;
-            margin-top: 20px; /* Space from content above */
+            margin-top: 20px;
             cursor: pointer;
             transition: background-color 0.2s ease, transform 0.1s ease, color 0.2s ease;
             border: 1px solid #ddd;
@@ -479,13 +589,15 @@
             width: fit-content;
             margin-left: auto;
             margin-right: auto;
+            /* 15. Subtle button press animation */
+            transform: scale(1);
         }
         .info-hide-button:hover {
             background-color: #e0e0e0;
             transform: translateY(-1px);
         }
         .info-hide-button:active {
-            transform: translateY(0);
+            transform: translateY(0) scale(0.98);
         }
 
 
@@ -503,7 +615,10 @@
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            /* 16. Modal open/close animation */
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            /* 17. Modal backdrop blur */
+            backdrop-filter: blur(5px);
         }
         .modal-overlay.active {
             opacity: 1;
@@ -516,9 +631,10 @@
             box-shadow: 0 15px 40px var(--modal-shadow-color);
             max-width: 500px;
             width: 90%;
-            transform: translateY(-50px) scale(0.8);
+            transform: translateY(-80px) scale(0.7); /* More dramatic start */
             opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease, background-color 0.5s ease;
+            /* 16. Modal open/close animation - refined */
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.5s ease, background-color 0.5s ease;
             position: relative;
             color: var(--text-main-color);
         }
@@ -539,7 +655,7 @@
         }
         .modal-close:hover {
             color: #333;
-            transform: rotate(90deg);
+            transform: rotate(90deg) scale(1.1); /* Slight scale on hover */
         }
         .modal-content h2 {
             font-size: 1.8rem;
@@ -561,11 +677,16 @@
             border: 1px solid #eee;
             border-radius: 10px;
             background-color: #fcfcfc;
+            /* 19. Settings option hover */
             box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
         }
         .settings-option:last-child {
             margin-bottom: 0;
+        }
+        .settings-option:hover {
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.08); /* Lift and shadow on hover */
+            background-color: #f8f8f8;
         }
         .settings-option label {
             font-weight: 600;
@@ -586,16 +707,17 @@
             border-radius: 8px;
             cursor: pointer;
             border: 3px solid transparent;
-            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            /* 20. Color swatch selection animation - refined */
+            transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .color-swatch.selected {
-            border-color: var(--text-shahmatnaya-color); /* Highlight with red from title */
-            transform: scale(1.15);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3), 0 0 15px var(--text-shahmatnaya-color); /* Added glow */
+            border-color: var(--text-shahmatnaya-color);
+            transform: scale(1.18); /* Slightly larger scale */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 20px var(--text-shahmatnaya-color); /* Stronger glow */
         }
         .color-swatch:hover {
-            transform: scale(1.08);
+            transform: scale(1.1);
         }
         .settings-option input[type="number"] {
             width: 80px;
@@ -607,7 +729,14 @@
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
             background-color: var(--container-bg);
             color: var(--text-main-color);
-            margin-top: 5px; /* Added margin for input */
+            margin-top: 5px;
+            /* 11. Input field focus animation */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .settings-option input[type="number"]:focus {
+            outline: none;
+            border-color: var(--button-primary-start);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 4px rgba(26, 115, 232, 0.3);
         }
 
         /* Toggle Switch */
@@ -752,22 +881,27 @@
             width: fit-content;
             margin-left: auto;
             margin-right: auto;
+            /* 15. Subtle button press animation */
+            transform: scale(1);
         }
         .history-clear-all:hover {
             background-color: var(--history-clear-all-hover-bg);
         }
+        .history-clear-all:active {
+            transform: translateY(0) scale(0.98);
+        }
 
         /* Footer styles */
         .app-footer {
-            background-color: #222; /* Dark background */
-            color: #f0f0f0; /* Light text */
+            background-color: #222;
+            color: #f0f0f0;
             padding: 30px 20px;
             margin-top: 40px;
             width: 100%;
             text-align: center;
             font-size: 0.9rem;
             line-height: 1.6;
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4); /* Shadow for separation */
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4);
             border-top-left-radius: 15px;
             border-top-right-radius: 15px;
         }
@@ -775,13 +909,30 @@
             margin-bottom: 8px;
         }
         .app-footer a {
-            color: #66b3ff; /* Lighter blue for links */
+            color: #66b3ff;
             text-decoration: none;
             transition: color 0.2s ease;
         }
         .app-footer a:hover {
             color: #aaddff;
             text-decoration: underline;
+        }
+
+        /* 12. Error message animation */
+        .error-message {
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            width: 100%;
+            text-align: center;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: opacity 0.4s ease, height 0.4s ease; /* Slower transition */
+        }
+        .error-message.active {
+            opacity: 1;
+            height: auto;
         }
 
         /* Responsive adjustments */
@@ -796,11 +947,20 @@
                 padding: 15px 25px;
                 font-size: clamp(1rem, 4vw, 1.2rem);
             }
-            .button-action, .button-icon {
+            .button-action, .button-icon, .button-load-by-number {
                 width: 45px;
                 height: 45px;
                 font-size: 1.3rem;
                 border-radius: 12px;
+                padding: 10px;
+            }
+            .button-load-by-number {
+                font-size: 0.9rem;
+                width: auto;
+                flex-grow: 1;
+            }
+            .position-input {
+                max-width: 100%;
             }
             .info-section h3 {
                 font-size: 1.3rem;
@@ -820,11 +980,11 @@
             .main-button-group {
                 gap: 15px;
             }
-            .primary-actions, .secondary-actions {
+            .primary-actions, .secondary-actions, .search-position-group {
                 flex-direction: column;
                 align-items: center;
             }
-            .button-generate, .button-action, .button-icon {
+            .button-generate, .button-action, .button-icon, .button-load-by-number {
                 width: 100%;
                 max-width: 300px;
             }
@@ -854,6 +1014,11 @@
         <div class="main-button-group">
             <div class="primary-actions">
                 <button id="generateButton" class="button-generate">Сгенерировать позицию</button>
+            </div>
+            <div class="search-position-group">
+                <input type="number" id="positionNumberInput" class="position-input" placeholder="Номер позиции (0-959)" min="0" max="959">
+                <button id="loadPositionButton" class="button-load-by-number">Загрузить по номеру</button>
+                <p id="positionErrorMessage" class="error-message"></p>
             </div>
             <div class="secondary-actions">
                 <button id="moreInfoButton" class="button-icon"> &#x2753; </button> <!-- Question mark icon -->
@@ -942,7 +1107,6 @@
         <p>Copyright © 2019 - 2025</p>
         <p>АНО "Тульская шахматная гостиная"</p>
         <p><a href="https://chess71.ru/politika-konfidencialnosti" target="_blank" rel="noopener noreferrer">Политика конфиденциальности</a></p>
-        <!-- Removed "Продвижение сайтов" as per request -->
         <p>Адрес: г. Тула, Проспект Ленина, д. 16, 2 этаж</p>
         <p>Email: chessintula@mail.ru</p>
         <p>Телефон: +7 (915) 789-789-6</p>
@@ -967,7 +1131,7 @@
         const moreInfoButton = document.getElementById('moreInfoButton');
         const infoSection = document.getElementById('infoSection');
         const piecePositionsList = document.getElementById('piecePositionsList');
-        const hideInfoButton = document.getElementById('hideInfoButton'); // New hide button
+        const hideInfoButton = document.getElementById('hideInfoButton');
         const historyButton = document.getElementById('historyButton');
         const settingsButton = document.getElementById('settingsButton');
 
@@ -981,6 +1145,11 @@
         const clearAllHistoryButton = document.getElementById('clearAllHistoryButton');
         const enableHistoryToggle = document.getElementById('enableHistoryToggle');
         const historyLimitOption = document.getElementById('historyLimitOption');
+
+        const positionNumberInput = document.getElementById('positionNumberInput');
+        const loadPositionButton = document.getElementById('loadPositionButton');
+        const positionErrorMessage = document.getElementById('positionErrorMessage');
+
 
         let currentBackRank = [];
         let history = [];
@@ -1046,74 +1215,83 @@
             }
         }
 
+        // This is the core Chess960 algorithm based on Wikipedia's numbering scheme.
+        // It maps a number from 0 to 959 to a unique back-rank setup.
         function getChess960BackRank(positionNumber) {
             const backRank = Array(8).fill(null);
             let tempIndex = positionNumber;
 
+            // Step 1: Place Bishops
+            // B1_idx determines position of light-square Bishop (b, d, f, h)
             const b1_idx = tempIndex % 4;
             tempIndex = Math.floor(tempIndex / 4);
+            // B2_idx determines position of dark-square Bishop (a, c, e, g)
             const b2_idx = tempIndex % 4;
             tempIndex = Math.floor(tempIndex / 4);
 
-            backRank[2 * b1_idx] = 'B';
-            backRank[2 * b2_idx + 1] = 'B';
+            const lightSquarePositions = [1, 3, 5, 7]; // Indices for b, d, f, h
+            const darkSquarePositions = [0, 2, 4, 6]; // Indices for a, c, e, g
 
-            const currentAvailableBoardSlots = [];
+            backRank[lightSquarePositions[b1_idx]] = 'B';
+            backRank[darkSquarePositions[b2_idx]] = 'B';
+
+            // Step 2: Place Queen
+            // q_idx determines position of Queen in the remaining 6 available slots
+            const q_idx = tempIndex % 6;
+            tempIndex = Math.floor(tempIndex / 6);
+
+            const currentAvailableSlots = [];
             for (let i = 0; i < 8; i++) {
                 if (backRank[i] === null) {
-                    currentAvailableBoardSlots.push(i);
+                    currentAvailableSlots.push(i);
                 }
             }
+            backRank[currentAvailableSlots[q_idx]] = 'Q';
 
-            const remainingPermutationIndex = tempIndex;
+            // Step 3: Place Knights
+            // n_combo_idx (0-9) determines the placement of the two Knights
+            // within the remaining 5 available slots.
+            const n_combo_idx = tempIndex; // This is the N4 from Wikipedia
 
-            const rkr_slot_combinations = [
-                [0, 1, 2], [0, 1, 3], [0, 1, 4], [0, 1, 5],
-                [0, 2, 3], [0, 2, 4], [0, 2, 5], [0, 3, 4],
-                [0, 3, 5], [0, 4, 5],
-                [1, 2, 3], [1, 2, 4], [1, 2, 5], [1, 3, 4],
-                [1, 3, 5], [1, 4, 5],
-                [2, 3, 4], [2, 3, 5], [2, 4, 5],
-                [3, 4, 5]
+            // This array maps the n_combo_idx to the relative positions (0-4)
+            // within the 5 available slots.
+            const knightCombinationsIn5Slots = [
+                [0, 1], [0, 2], [0, 3], [0, 4], // N N _ _ _
+                [1, 2], [1, 3], [1, 4],         // _ N N _ _
+                [2, 3], [2, 4],                 // _ _ N N _
+                [3, 4]                          // _ _ _ N N
             ];
 
-            const nn_slot_combinations = [
-                [0, 1], [0, 2], [1, 2]
-            ];
-
-            let currentRemainingIndex = remainingPermutationIndex;
-
-            const rkr_combo_index = currentRemainingIndex % 20;
-            currentRemainingIndex = Math.floor(currentRemainingIndex / 20);
-
-            const selectedRKRIndicesInAvailable = rkr_slot_combinations[rkr_combo_index];
-
-            backRank[currentAvailableBoardSlots[selectedRKRIndicesInAvailable[0]]] = 'R';
-            backRank[currentAvailableBoardSlots[selectedRKRIndicesInAvailable[1]]] = 'K';
-            backRank[currentAvailableBoardSlots[selectedRKRIndicesInAvailable[2]]] = 'R';
-
-            const remainingSlotsAfterRKR = [];
-            for (let i = 0; i < 6; i++) {
-                if (!selectedRKRIndicesInAvailable.includes(i)) {
-                    remainingSlotsAfterRKR.push(currentAvailableBoardSlots[i]);
+            const remainingSlotsAfterBQ = [];
+            for (let i = 0; i < 8; i++) {
+                if (backRank[i] === null) {
+                    remainingSlotsAfterBQ.push(i);
                 }
             }
+            // At this point, remainingSlotsAfterBQ should have exactly 5 elements.
 
-            const nn_combo_index = currentRemainingIndex % 3;
-            currentRemainingIndex = Math.floor(currentRemainingIndex / 3);
+            const selectedKnightRelativeIndices = knightCombinationsIn5Slots[n_combo_idx];
+            backRank[remainingSlotsAfterBQ[selectedKnightRelativeIndices[0]]] = 'N';
+            backRank[remainingSlotsAfterBQ[selectedKnightRelativeIndices[1]]] = 'N';
 
-            const selectedNNIndicesInRemaining = nn_slot_combinations[nn_combo_index];
+            // Step 4: Place King and Rooks
+            // The King must be between the two Rooks. There is only one way to place them
+            // in the final 3 remaining slots.
+            const finalThreeFreeSquares = [];
+            for (let i = 0; i < 8; i++) {
+                if (backRank[i] === null) {
+                    finalThreeFreeSquares.push(i);
+                }
+            }
+            // At this point, finalThreeFreeSquares should have exactly 3 elements.
 
-            backRank[remainingSlotsAfterRKR[selectedNNIndicesInRemaining[0]]] = 'N';
-            backRank[remainingSlotsAfterRKR[selectedNNIndicesInRemaining[1]]] = 'N';
-
-            const finalQSlot = remainingSlotsAfterRKR.find(
-                slot => !selectedNNIndicesInRemaining.map(idx => remainingSlotsAfterRKR[idx]).includes(slot)
-            );
-            backRank[finalQSlot] = 'Q';
+            backRank[finalThreeFreeSquares[0]] = 'R';
+            backRank[finalThreeFreeSquares[1]] = 'K';
+            backRank[finalThreeFreeSquares[2]] = 'R';
 
             return backRank;
         }
+
 
         function renderFullBoard(whiteBackRank, isInitialLoad = false) {
             const oldPieces = document.querySelectorAll('.piece');
@@ -1222,7 +1400,7 @@
             }
         }
 
-        function generateAndDisplayPosition(posNum = null) {
+        function generateAndDisplayPosition(posNum = null, source = null) {
             let whiteBackRank;
             let actualPositionNumber = posNum;
             const isFirstLaunch = localStorage.getItem('chess960_first_launch') === null;
@@ -1243,7 +1421,7 @@
             }
 
             renderFullBoard(whiteBackRank, isFirstLaunch);
-            if (posNum === null && isHistoryEnabled()) {
+            if (source !== 'from-history') {
                 addPositionToHistory(actualPositionNumber, whiteBackRank);
             }
         }
@@ -1281,12 +1459,10 @@
 
         function toggleInfoSection() {
             infoSection.classList.toggle('active');
-            // The button icon remains the same, no text change needed.
-            // The hide button's visibility is controlled by CSS based on .info-section.active
         }
 
         moreInfoButton.addEventListener('click', toggleInfoSection);
-        hideInfoButton.addEventListener('click', toggleInfoSection); // New listener for hide button
+        hideInfoButton.addEventListener('click', toggleInfoSection);
 
         // --- Modal Logic (Settings & History) ---
 
@@ -1333,7 +1509,6 @@
 
             const historyEnabled = isHistoryEnabled();
             enableHistoryToggle.checked = historyEnabled;
-            // Now historyLimitOption is a child of the same settings-option, so its display needs to be handled directly.
             historyLimitOption.style.display = historyEnabled ? 'block' : 'none';
             historyLimitInput.value = localStorage.getItem('chess960_history_limit') || MAX_HISTORY_DEFAULT;
         });
@@ -1357,7 +1532,7 @@
         enableHistoryToggle.addEventListener('change', () => {
             const enabled = enableHistoryToggle.checked;
             localStorage.setItem('chess960_enable_history', enabled);
-            historyLimitOption.style.display = enabled ? 'block' : 'none'; // Control visibility of the limit part
+            historyLimitOption.style.display = enabled ? 'block' : 'none';
             updateHistoryButtonVisibility();
             if (!enabled) {
                 history = [];
@@ -1510,7 +1685,7 @@
                 loadButton.style.padding = '8px 12px';
                 loadButton.style.fontSize = '0.9rem';
                 loadButton.addEventListener('click', () => {
-                    generateAndDisplayPosition(item.positionNumber);
+                    generateAndDisplayPosition(item.positionNumber, 'from-history');
                     closeModal(historyModal);
                 });
                 actions.appendChild(loadButton);
@@ -1565,6 +1740,31 @@
             loadHistory();
             generateAndDisplayPosition();
             generateButton.addEventListener('click', () => generateAndDisplayPosition());
+
+            loadPositionButton.addEventListener('click', () => {
+                const posNum = parseInt(positionNumberInput.value);
+                const errorMessageElement = document.getElementById('positionErrorMessage');
+                errorMessageElement.classList.remove('active'); // Hide any previous error
+
+                if (isNaN(posNum) || posNum < 0 || posNum > 959) {
+                    positionNumberInput.style.borderColor = 'red';
+                    positionNumberInput.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 3px rgba(255,0,0,0.4)';
+                    errorMessageElement.textContent = 'Введите число от 0 до 959.';
+                    errorMessageElement.classList.add('active');
+
+                    setTimeout(() => {
+                        positionNumberInput.style.borderColor = '#ccc';
+                        positionNumberInput.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.1)';
+                        errorMessageElement.classList.remove('active');
+                    }, 3000);
+                    return;
+                }
+                positionNumberInput.style.borderColor = '#ccc';
+                positionNumberInput.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.1)';
+                errorMessageElement.classList.remove('active');
+
+                generateAndDisplayPosition(posNum);
+            });
         };
     </script>
 </body>
